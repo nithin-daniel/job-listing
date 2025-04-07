@@ -1,8 +1,12 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.http import HttpResponse
 from .serializers import (
     UserSerializer,
     OfferSerializer,
@@ -15,13 +19,33 @@ from django.contrib.auth.hashers import check_password
 # Create your views here.
 
 
-@api_view(["POST"])
+@csrf_exempt
+@api_view(["POST", "OPTIONS"])
+@permission_classes([AllowAny])
 def signup(request):
+    if request.method == "OPTIONS":
+        response = HttpResponse()
+        response["Access-Control-Allow-Origin"] = "http://localhost:5173"
+        response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "Content-Type, Accept"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
+
+    print("Received signup request data:", request.data)
     serializer = UserSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if not serializer.is_valid():
+        print("Validation errors:", serializer.errors)
+        response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        response["Access-Control-Allow-Origin"] = "http://localhost:5173"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
+
+    serializer.save()
+    response = Response(serializer.data, status=status.HTTP_201_CREATED)
+    response["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 
 @api_view(["POST"])
