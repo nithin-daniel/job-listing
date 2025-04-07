@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -26,6 +26,7 @@ const Signup = () => {
   const navigate = useNavigate();
   const [isWorker, setIsWorker] = useState(false);
   const [error, setError] = useState("");
+  const [serviceCategories, setServiceCategories] = useState([]);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -38,11 +39,33 @@ const Signup = () => {
     state: "",
     pincode: "",
     // Worker specific fields
-    highest_qualification: "",
+    highest_qualification: "high_school", // Set default to first qualification
     experience: "",
-    service_category: "",
+    service_category: "", // This will be set in useEffect after fetching categories
     hourly_rate: "",
   });
+
+  useEffect(() => {
+    const fetchServiceCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/api/service-categories/"
+        );
+        setServiceCategories(response.data);
+        // Set default service category to first category in the list
+        if (response.data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            service_category: response.data[0].id,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching service categories:", error);
+      }
+    };
+
+    fetchServiceCategories();
+  }, []);
 
   const validateForm = () => {
     if (
@@ -405,7 +428,6 @@ const Signup = () => {
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                       >
-                        <option value="">Select Qualification</option>
                         {QUALIFICATION_CHOICES.map((qualification) => (
                           <option
                             key={qualification.value}
@@ -469,10 +491,8 @@ const Signup = () => {
                       >
                         Service Category
                       </label>
-                      <Input
+                      <select
                         id="service_category"
-                        type="text"
-                        placeholder="Enter service category"
                         value={formData.service_category}
                         onChange={(e) =>
                           setFormData({
@@ -480,8 +500,14 @@ const Signup = () => {
                             service_category: e.target.value,
                           })
                         }
-                        className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                      />
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      >
+                        {serviceCategories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </>
                 )}

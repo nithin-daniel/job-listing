@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ServiceCategorySerializer
 from .models import ServiceCategory, User
 
 
@@ -44,3 +44,10 @@ class UserLoginView(APIView):
                 {"message": "User not found", "status": "error"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+class ServiceCategoryListView(APIView):
+    def get(self, request):
+        categories = ServiceCategory.objects.all()
+        serializer = ServiceCategorySerializer(categories, many=True)
+        return Response(serializer.data)

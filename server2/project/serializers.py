@@ -35,3 +35,9 @@ class UserSerializer(serializers.ModelSerializer):
                         f"{field} is required for workers"
                     )
         return data
+
+
+class ServiceCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceCategory
+        fields = ["id", "name"]
