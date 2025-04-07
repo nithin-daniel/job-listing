@@ -3,8 +3,8 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer, ServiceCategorySerializer
-from .models import ServiceCategory, User
+from .serializers import UserSerializer, ServiceCategorySerializer, JobSerializer
+from .models import ServiceCategory, User, Job
 
 
 # Create your views here.
@@ -35,6 +35,8 @@ class UserLoginView(APIView):
                     "message": "Login successful",
                     "is_worker": user.is_worker,
                     "status": "success",
+                    "client_id": user.id,
+                    "pincode": user.pincode,
                 },
                 status=status.HTTP_200_OK,
             )
@@ -51,3 +53,43 @@ class ServiceCategoryListView(APIView):
         categories = ServiceCategory.objects.all()
         serializer = ServiceCategorySerializer(categories, many=True)
         return Response(serializer.data)
+
+
+class JobCreateView(APIView):
+    def post(self, request):
+        # Add user_id from request data
+        job_data = request.data.copy()
+        print(job_data)
+        # Validate user exists
+        try:
+            user = User.objects.get(id=job_data.get("client"))
+        except User.DoesNotExist:
+            return Response(
+                {"message": "User not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate service category exists
+        try:
+            category = ServiceCategory.objects.get(id=job_data.get("service_category"))
+        except ServiceCategory.DoesNotExist:
+            return Response(
+                {"message": "Service category not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = JobSerializer(data=job_data)
+        if serializer.is_valid():
+            job = serializer.save()
+            return Response(
+                {
+                    "message": "Job created successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(
+            {"message": "Invalid data", "errors": serializer.errors, "status": "error"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )

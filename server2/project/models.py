@@ -12,6 +12,8 @@ class ServiceCategory(models.Model):
 
 
 class User(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     USER_TYPE_CHOICES = [
         ("client", "Client"),
         ("worker", "Worker"),
@@ -54,4 +56,24 @@ class User(models.Model):
     )
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.email})"
+        return f"{self.first_name} {self.last_name} ({self.id})"
+
+
+class Job(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    client = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="posted_jobs"
+    )
+    deadline = models.DateField(default=None, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    service_category = models.ForeignKey(
+        ServiceCategory, on_delete=models.SET_NULL, null=True
+    )
+    is_completed = models.BooleanField(default=False)
+    budget = models.DecimalField(max_digits=10, decimal_places=2)
+    location = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.title

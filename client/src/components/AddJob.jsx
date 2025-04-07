@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -13,20 +14,107 @@ import {
 
 const AddJob = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     service_category: "",
     budget: "",
-    location: "",
     deadline: "",
+    client: localStorage.getItem("userId") || "",
+    location: localStorage.getItem("pincode") || "",
   });
 
-  const handleSubmit = (e) => {
+  // Fetch service categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/api/service-categories/"
+        );
+        setCategories(response.data);
+        // Set the first category as default if available
+        if (response.data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            service_category: response.data[0].id,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+        setError("Failed to load service categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle job creation logic here
-    navigate("/jobs");
+    setLoading(true);
+    setError(null);
+
+    try {
+      const formattedData = {
+        ...formData,
+        budget: parseFloat(formData.budget),
+        deadline: formData.deadline || null,
+      };
+
+      const response = await axios.post(
+        "http://localhost:8000/api/jobs/create/",
+        formattedData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 201) {
+        navigate("/jobs");
+      }
+    } catch (err) {
+      console.error("Error creating job:", err);
+      setError(err.response?.data?.message || "Failed to create job");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Update the service category input to use a select element
+  const ServiceCategorySelect = () => (
+    <select
+      id="service_category"
+      value={formData.service_category}
+      onChange={(e) =>
+        setFormData({ ...formData, service_category: e.target.value })
+      }
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+    >
+      <option value="" disabled>
+        Select a category
+      </option>
+      {categories.length > 0 ? (
+        <>
+          {categories.map((category, index) => (
+            <option
+              key={category.id}
+              value={category.id}
+              selected={index === 0} // Select first option
+            >
+              {category.name}
+            </option>
+          ))}
+        </>
+      ) : (
+        <option value="">Loading categories...</option>
+      )}
+    </select>
+  );
 
   return (
     <div className="flex items-center justify-center p-4">
@@ -39,6 +127,13 @@ const AddJob = () => {
             Fill in the details to post a new job
           </CardDescription>
         </CardHeader>
+
+        {error && (
+          <div className="mx-6 p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -86,19 +181,7 @@ const AddJob = () => {
                 >
                   Service Category
                 </label>
-                <Input
-                  id="service_category"
-                  type="text"
-                  placeholder="Enter service category"
-                  value={formData.service_category}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      service_category: e.target.value,
-                    })
-                  }
-                  className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                />
+                <ServiceCategorySelect />
               </div>
               <div className="space-y-2">
                 <label
@@ -162,14 +245,23 @@ const AddJob = () => {
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-all duration-200 transform hover:scale-[1.02]"
+              disabled={loading}
             >
-              Post Job
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                  Creating...
+                </div>
+              ) : (
+                "Post Job"
+              )}
             </Button>
             <Button
               type="button"
               variant="outline"
               className="w-full"
               onClick={() => navigate("/jobs")}
+              disabled={loading}
             >
               Cancel
             </Button>

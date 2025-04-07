@@ -42,6 +42,8 @@ const Login = () => {
         // Store user type in localStorage or context
         localStorage.setItem("isWorker", response.data.is_worker);
         localStorage.setItem("userEmail", formData.email);
+        localStorage.setItem("userId", response.data.client_id);
+        localStorage.setItem("pincode", response.data.pincode);
 
         // Redirect based on user type
         if (response.data.is_worker) {

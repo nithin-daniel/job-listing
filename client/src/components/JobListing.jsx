@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -8,6 +8,8 @@ const JobListing = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedJob, setSelectedJob] = useState(null);
   const [viewingApplications, setViewingApplications] = useState(false);
+  const [serviceCategories, setServiceCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const userInitials = "AK"; // This should come from user context/state
 
   // Mock applicants data
@@ -118,6 +120,24 @@ const JobListing = () => {
       ],
     },
   ];
+
+  const fetchServiceCategories = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/service-categories/");
+      if (response.ok) {
+        const data = await response.json();
+        setServiceCategories(data);
+      } else {
+        console.error("Failed to fetch service categories");
+      }
+    } catch (error) {
+      console.error("Error fetching service categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchServiceCategories();
+  }, []);
 
   const handleViewApplications = (job) => {
     setSelectedJob(job);
@@ -363,6 +383,20 @@ const JobListing = () => {
           <h1 className="text-2xl font-bold text-gray-800">
             {activeTab === "all" ? "All Jobs" : "My Jobs"}
           </h1>
+          <div className="flex items-center space-x-4">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="block w-48 rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">All Categories</option>
+              {serviceCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Content based on active tab */}

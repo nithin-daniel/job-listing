@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, ServiceCategory
+from .models import User, ServiceCategory, Job
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -41,3 +41,21 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceCategory
         fields = ["id", "name"]
+
+
+class JobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        fields = [
+            "id",
+            "title",
+            "description",
+            "client",
+            "service_category",
+            "is_completed",
+            "budget",
+            "location",
+            "created_at",
+            "deadline",
+        ]
+        read_only_fields = ["id", "created_at"]
