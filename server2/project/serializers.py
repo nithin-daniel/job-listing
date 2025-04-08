@@ -44,6 +44,8 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
+    service_category_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Job
         fields = [
@@ -51,11 +53,18 @@ class JobSerializer(serializers.ModelSerializer):
             "title",
             "description",
             "client",
+            "deadline",
+            "created_at",
             "service_category",
+            "service_category_name",
             "is_completed",
             "budget",
             "location",
-            "created_at",
-            "deadline",
+            "image",
         ]
         read_only_fields = ["id", "created_at"]
+
+    def get_service_category_name(self, obj):
+        if obj.service_category:
+            return obj.service_category.name
+        return None

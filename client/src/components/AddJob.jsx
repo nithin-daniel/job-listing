@@ -16,6 +16,7 @@ const AddJob = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -26,6 +27,7 @@ const AddJob = () => {
     deadline: "",
     client: localStorage.getItem("userId") || "",
     location: localStorage.getItem("pincode") || "",
+    image: null,
   });
 
   // Fetch service categories when component mounts
@@ -52,24 +54,42 @@ const AddJob = () => {
     fetchCategories();
   }, []);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, image: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const formattedData = {
-        ...formData,
-        budget: parseFloat(formData.budget),
-        deadline: formData.deadline || null,
-      };
+      const submitFormData = new FormData();
+      submitFormData.append("title", formData.title);
+      submitFormData.append("description", formData.description);
+      submitFormData.append("service_category", formData.service_category);
+      submitFormData.append("budget", parseFloat(formData.budget));
+      submitFormData.append("deadline", formData.deadline || "");
+      submitFormData.append("client", formData.client);
+      submitFormData.append("location", formData.location);
+      if (formData.image) {
+        submitFormData.append("image", formData.image);
+      }
 
       const response = await axios.post(
         "http://localhost:8000/api/jobs/create/",
-        formattedData,
+        submitFormData,
         {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -239,6 +259,31 @@ const AddJob = () => {
                   className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="image"
+                className="text-sm font-medium block text-left"
+              >
+                Job Image
+              </label>
+              <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              />
+              {imagePreview && (
+                <div className="mt-2">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="max-h-40 rounded-md"
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

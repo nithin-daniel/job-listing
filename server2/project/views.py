@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import UserSerializer, ServiceCategorySerializer, JobSerializer
 from .models import ServiceCategory, User, Job
 
@@ -56,11 +57,11 @@ class ServiceCategoryListView(APIView):
 
 
 class JobCreateView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+
     def post(self, request):
-        # Add user_id from request data
         job_data = request.data.copy()
-        print(job_data)
-        # Validate user exists
+
         try:
             user = User.objects.get(id=job_data.get("client"))
         except User.DoesNotExist:
@@ -69,7 +70,6 @@ class JobCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Validate service category exists
         try:
             category = ServiceCategory.objects.get(id=job_data.get("service_category"))
         except ServiceCategory.DoesNotExist:
@@ -93,3 +93,29 @@ class JobCreateView(APIView):
             {"message": "Invalid data", "errors": serializer.errors, "status": "error"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class JobsByClientView(APIView):
+    def get(self, request):
+        client_id = request.query_params.get("client_id")
+        if not client_id:
+            return Response(
+                {"message": "Client ID is required", "status": "error"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            jobs = Job.objects.filter(client=client_id)
+            serializer = JobSerializer(jobs, many=True)
+            return Response(
+                {
+                    "message": "Jobs fetched successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

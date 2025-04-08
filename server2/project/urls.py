@@ -1,6 +1,12 @@
 from django.urls import path
 from . import views
-from .views import UserSignupView, UserLoginView, ServiceCategoryListView, JobCreateView
+from .views import (
+    UserSignupView,
+    UserLoginView,
+    ServiceCategoryListView,
+    JobCreateView,
+    JobsByClientView,
+)
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -12,4 +18,5 @@ urlpatterns = [
         name="service-categories",
     ),
     path("jobs/create/", JobCreateView.as_view(), name="job-create"),
+    path("jobs/client/", JobsByClientView.as_view(), name="jobs-by-client"),
 ]

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
+import axios from "axios";
 
 const JobListing = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -10,6 +11,8 @@ const JobListing = () => {
   const [viewingApplications, setViewingApplications] = useState(false);
   const [serviceCategories, setServiceCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [clientJobs, setClientJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const userInitials = "AK"; // This should come from user context/state
 
   // Mock applicants data
@@ -87,43 +90,11 @@ const JobListing = () => {
     },
   ];
 
-  const myPostedJobs = [
-    {
-      id: 3,
-      title: "Kitchen Renovation",
-      description:
-        "Looking for a skilled contractor to renovate my kitchen. Need new cabinets, countertops, and flooring.",
-      service: "Home Renovation",
-      budget: "$5000",
-      date: "1 day ago",
-      status: "open",
-      applicants: 5,
-      location: "San Francisco",
-      images: [
-        "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-        "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-      ],
-    },
-    {
-      id: 4,
-      title: "Garden Landscaping",
-      description:
-        "Need a professional landscaper to design and implement a new garden layout in my backyard.",
-      service: "Landscaping",
-      budget: "$2000",
-      date: "3 days ago",
-      status: "in-progress",
-      applicants: 3,
-      location: "San Francisco",
-      images: [
-        "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-      ],
-    },
-  ];
-
   const fetchServiceCategories = async () => {
     try {
-      const response = await fetch("http://localhost:8000/service-categories/");
+      const response = await fetch(
+        "http://localhost:8000/api/service-categories/"
+      );
       if (response.ok) {
         const data = await response.json();
         setServiceCategories(data);
@@ -135,8 +106,44 @@ const JobListing = () => {
     }
   };
 
+  const fetchClientJobs = async (clientId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/jobs/client/?client_id=${clientId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchServiceCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const clientId = localStorage.getItem("userId");
+      if (!clientId) {
+        console.error("No client ID found");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetchClientJobs(clientId);
+        console.log(response);
+
+        setClientJobs(response.data);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
   }, []);
 
   const handleViewApplications = (job) => {
@@ -538,10 +545,18 @@ const JobListing = () => {
               </Card>
             ))}
           </div>
+        ) : // My Posted Jobs
+        loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : clientJobs.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No jobs posted yet
+          </div>
         ) : (
-          // My Posted Jobs
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {myPostedJobs.map((job) => (
+            {clientJobs.map((job) => (
               <Card
                 key={job.id}
                 className="hover:shadow-lg transition-shadow duration-200"
@@ -558,12 +573,12 @@ const JobListing = () => {
                       </div>
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          job.status === "open"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
+                          job.is_completed
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
                         }`}
                       >
-                        {job.status}
+                        {job.is_completed ? "Completed" : "Open"}
                       </span>
                     </div>
 
@@ -571,16 +586,13 @@ const JobListing = () => {
                     <p className="text-gray-600">{job.description}</p>
 
                     {/* Job Images */}
-                    {job.images && job.images.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {job.images.map((image, index) => (
-                          <img
-                            key={index}
-                            src={image}
-                            alt={`Job image ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-md"
-                          />
-                        ))}
+                    {job.image && (
+                      <div className="w-full">
+                        <img
+                          src={`http://localhost:8000${job.image}`}
+                          alt="Job image"
+                          className="w-full h-32 object-cover rounded-md"
+                        />
                       </div>
                     )}
 
@@ -588,33 +600,19 @@ const JobListing = () => {
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-4">
                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          {job.service}
+                          {job.service_category_name}
                         </span>
-                        <span>Budget: {job.budget}</span>
+                        <span>Budget: ${job.budget}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                          />
-                        </svg>
-                        <span>{job.applicants} applicants</span>
+                        <span>
+                          {new Date(job.created_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex justify-between items-center pt-4 border-t">
-                      <span className="text-sm text-gray-500">
-                        Posted {job.date}
-                      </span>
                       <div className="flex space-x-2">
                         <Button
                           variant="outline"

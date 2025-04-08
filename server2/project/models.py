@@ -8,7 +8,7 @@ class ServiceCategory(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
-        return str(self.id)
+        return self.name
 
 
 class User(models.Model):
@@ -74,6 +74,8 @@ class Job(models.Model):
     is_completed = models.BooleanField(default=False)
     budget = models.DecimalField(max_digits=10, decimal_places=2)
     location = models.CharField(max_length=200)
+    image = models.ImageField(upload_to="job_images/", blank=True, null=True)
 
+    # Add any other fields you need
     def __str__(self):
         return self.title
