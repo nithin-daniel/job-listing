@@ -79,3 +79,27 @@ class Job(models.Model):
     # Add any other fields you need
     def __str__(self):
         return self.title
+
+
+class JobAcceptance(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="acceptances")
+    job_seekers = models.ManyToManyField(
+        User, related_name="accepted_jobs", limit_choices_to={"is_worker": True}
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("accepted", "Accepted"),
+            ("rejected", "Rejected"),
+        ],
+        default="pending",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Job: {self.job.title} - Status: {self.status}"

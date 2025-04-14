@@ -6,6 +6,10 @@ from .views import (
     ServiceCategoryListView,
     JobCreateView,
     JobsByClientView,
+    JobsForSeekersView,
+    JobApplicationView,
+    MyApplicationsView,
+    UserProfileUpdateView,
 )
 
 urlpatterns = [
@@ -19,4 +23,8 @@ urlpatterns = [
     ),
     path("jobs/create/", JobCreateView.as_view(), name="job-create"),
     path("jobs/client/", JobsByClientView.as_view(), name="jobs-by-client"),
+    path("jobs/available/", JobsForSeekersView.as_view(), name="jobs-for-seekers"),
+    path("jobs/apply/", JobApplicationView.as_view(), name="job-apply"),
+    path("jobs/my-applications/", MyApplicationsView.as_view(), name="my-applications"),
+    path("user/profile/", UserProfileUpdateView.as_view(), name="user-profile"),
 ]

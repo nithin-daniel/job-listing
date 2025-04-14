@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -24,6 +25,14 @@ const JobSeeker = () => {
     bio: "Experienced handyman with expertise in plumbing and electrical work. Committed to providing quality service and customer satisfaction.",
   });
 
+  const [availableJobs, setAvailableJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [applications, setApplications] = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [applicationsError, setApplicationsError] = useState(null);
+
   const handleSaveProfile = (updatedProfile) => {
     setUserProfile(updatedProfile);
     setIsEditing(false);
@@ -33,66 +42,90 @@ const JobSeeker = () => {
     setIsEditing(false);
   };
 
-  // Mock available jobs
-  const availableJobs = [
-    {
-      id: 1,
-      title: "Kitchen Renovation",
-      description:
-        "Looking for a skilled contractor to renovate my kitchen. Need new cabinets, countertops, and flooring.",
-      service: "Home Renovation",
-      budget: "$5000",
-      date: "1 day ago",
-      location: "San Francisco",
-      images: [
-        "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-      ],
-    },
-    {
-      id: 2,
-      title: "Garden Landscaping",
-      description:
-        "Need a professional landscaper to design and implement a new garden layout in my backyard.",
-      service: "Landscaping",
-      budget: "$2000",
-      date: "3 days ago",
-      location: "San Francisco",
-      images: [
-        "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-      ],
-    },
-  ];
+  const fetchAvailableJobs = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        "http://localhost:8000/api/jobs/available/"
+      );
+      setAvailableJobs(response.data.data);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+      setError("Failed to fetch available jobs");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Mock applications data
-  const [applications] = useState([
-    {
-      id: 1,
-      jobTitle: "Kitchen Renovation",
-      clientName: "Sarah Johnson",
-      appliedDate: "2024-03-20",
-      status: "in-progress",
-      budget: "$5000",
-      location: "San Francisco",
-    },
-    {
-      id: 2,
-      jobTitle: "Garden Landscaping",
-      clientName: "Michael Brown",
-      appliedDate: "2024-03-18",
-      status: "accepted",
-      budget: "$2000",
-      location: "San Francisco",
-    },
-    {
-      id: 3,
-      jobTitle: "Bathroom Remodel",
-      clientName: "Emily Davis",
-      appliedDate: "2024-03-15",
-      status: "rejected",
-      budget: "$3500",
-      location: "San Francisco",
-    },
-  ]);
+  // const fetchMyApplications = async () => {
+  //   try {
+  //     const userId = localStorage.getItem("userId");
+  //     const response = await axios.get(
+  //       `http://localhost:8000/api/jobs/my-applications/?userId=${userId}`
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error fetching applications:", error);
+  //     throw error;
+  //   }
+  // };
+
+  const handleJobApplication = async (jobId) => {
+    try {
+      const userId = localStorage.getItem("userId");
+
+      if (!userId) {
+        alert("Please log in to apply for jobs");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:8000/api/jobs/apply/",
+        {
+          job_id: jobId,
+          userId: userId, // Changed from user_id to userId to match backend
+        }
+      );
+
+      if (response.status === 201) {
+        alert("Application submitted successfully!");
+        setActiveTab("applications");
+      }
+    } catch (error) {
+      const message =
+        error.response?.data?.message || "Failed to submit application";
+      alert(message);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableJobs();
+  }, []);
+
+  useEffect(() => {
+    const loadApplications = async () => {
+      if (activeTab === "applications") {
+        try {
+          setApplicationsLoading(true);
+          const userId = localStorage.getItem("userId");
+          const response = await axios.get(
+            `http://localhost:8000/api/jobs/my-applications/?userId=${userId}`
+          );
+          setApplications(response.data.data);
+          setApplicationsError(null);
+        } catch (error) {
+          console.error("Error fetching applications:", error);
+          setApplicationsError(
+            error.response?.data?.message || "Failed to fetch applications"
+          );
+        } finally {
+          setApplicationsLoading(false);
+        }
+      }
+    };
+
+    loadApplications();
+  }, [activeTab]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -362,58 +395,73 @@ const JobSeeker = () => {
               </h1>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {availableJobs.map((job) => (
-                <Card
-                  key={job.id}
-                  className="hover:shadow-lg transition-shadow duration-200"
-                >
-                  <CardContent className="p-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {job.title}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {job.location}
-                          </p>
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-600 py-8">{error}</div>
+            ) : availableJobs.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                No jobs available
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {availableJobs.map((job) => (
+                  <Card
+                    key={job.id}
+                    className="hover:shadow-lg transition-shadow duration-200"
+                  >
+                    <CardContent className="p-4">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {job.title}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {job.location}
+                            </p>
+                          </div>
+                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                            {job.service_category_name}
+                          </span>
                         </div>
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
-                          {job.service}
-                        </span>
-                      </div>
 
-                      <p className="text-gray-600">{job.description}</p>
+                        <p className="text-gray-600">{job.description}</p>
 
-                      {job.images && job.images.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {job.images.map((image, index) => (
+                        {job.image && (
+                          <div className="w-full">
                             <img
-                              key={index}
-                              src={image}
-                              alt={`Job image ${index + 1}`}
+                              src={`http://localhost:8000${job.image}`}
+                              alt="Job image"
                               className="w-full h-32 object-cover rounded-md"
                             />
-                          ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <span>Budget: ${job.budget}</span>
+                          <span>
+                            Posted{" "}
+                            {new Date(job.created_at).toLocaleDateString()}
+                          </span>
                         </div>
-                      )}
 
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>Budget: {job.budget}</span>
-                        <span>Posted {job.date}</span>
+                        <div className="flex justify-end">
+                          <Button
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                            onClick={() => handleJobApplication(job.id)}
+                          >
+                            Apply Now
+                          </Button>
+                        </div>
                       </div>
-
-                      <div className="flex justify-end">
-                        <Button className="bg-green-500 hover:bg-green-600 text-white">
-                          Apply Now
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
@@ -421,74 +469,90 @@ const JobSeeker = () => {
               My Applications
             </h1>
 
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Job Details
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Client
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Budget
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Applied Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {applications.map((application) => (
-                      <tr key={application.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {application.jobTitle}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {application.location}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {application.clientName}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {application.budget}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {application.appliedDate}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                application.status
-                              )}`}
-                            >
-                              {getStatusIcon(application.status)}
-                              <span className="ml-1 capitalize">
-                                {application.status.replace("-", " ")}
-                              </span>
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {applicationsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            </div>
+            ) : applicationsError ? (
+              <div className="text-center text-red-600 py-8">
+                {applicationsError}
+              </div>
+            ) : applications.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                No applications found
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Job Details
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Client
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Budget
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Applied Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {applications.map((application) => (
+                        <tr key={application.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {application.job_title}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {application.location}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {application.client_name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              ${application.budget}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {new Date(
+                                application.applied_date
+                              ).toLocaleDateString()}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                  application.status
+                                )}`}
+                              >
+                                {getStatusIcon(application.status)}
+                                <span className="ml-1 capitalize">
+                                  {application.status.replace("-", " ")}
+                                </span>
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
