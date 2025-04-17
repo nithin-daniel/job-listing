@@ -25,7 +25,7 @@ const AddJob = () => {
     service_category: "",
     budget: "",
     deadline: "",
-    client: localStorage.getItem("userId") || "",
+    user: localStorage.getItem("userId") || "",
     location: localStorage.getItem("pincode") || "",
     image: null,
   });
@@ -78,7 +78,7 @@ const AddJob = () => {
       submitFormData.append("service_category", formData.service_category);
       submitFormData.append("budget", parseFloat(formData.budget));
       submitFormData.append("deadline", formData.deadline || "");
-      submitFormData.append("client", formData.client);
+      submitFormData.append("user", formData.user);
       submitFormData.append("location", formData.location);
       if (formData.image) {
         submitFormData.append("image", formData.image);

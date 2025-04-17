@@ -63,7 +63,7 @@ class JobCreateView(APIView):
         job_data = request.data.copy()
 
         try:
-            user = User.objects.get(id=job_data.get("client"))
+            user = User.objects.get(id=job_data.get("user"))
         except User.DoesNotExist:
             return Response(
                 {"message": "User not found", "status": "error"},
@@ -107,6 +107,33 @@ class JobsByClientView(APIView):
         try:
             jobs = Job.objects.filter(client=client_id)
             serializer = JobSerializer(jobs, many=True)
+            return Response(
+                {
+                    "message": "Jobs fetched successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class UserPostedJobsView(APIView):
+    def get(self, request):
+        user_id = request.query_params.get("userId")
+        if not user_id:
+            return Response(
+                {"message": "User ID is required", "status": "error"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            jobs = Job.objects.filter(client_id=user_id).order_by("-created_at")
+            serializer = JobSerializer(jobs, many=True)
+
             return Response(
                 {
                     "message": "Jobs fetched successfully",

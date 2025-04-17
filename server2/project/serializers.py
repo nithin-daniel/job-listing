@@ -52,7 +52,7 @@ class JobSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
-            "client",
+            "user",
             "deadline",
             "created_at",
             "service_category",

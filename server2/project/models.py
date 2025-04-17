@@ -63,9 +63,7 @@ class Job(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200)
     description = models.TextField()
-    client = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="posted_jobs"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posted_jobs")
     deadline = models.DateField(default=None, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     service_category = models.ForeignKey(
