@@ -234,7 +234,7 @@ class MyApplicationsView(APIView):
                         "job_description": job.description,
                         "budget": str(job.budget),
                         "location": job.location,
-                        "client_name": f"{job.client.first_name} {job.client.last_name}",
+                        "client_name": job.client.full_name,  # Changed from f"{job.client.first_name} {job.client.last_name}"
                         "applied_date": application.created_at,
                         "status": application.status,
                         "service_category": job.service_category.name,
@@ -323,4 +323,59 @@ class UserProfileUpdateView(APIView):
             return Response(
                 {"message": "User not found", "status": "error"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class RequestedApplicationsView(APIView):
+    def get(self, request):
+        try:
+            user_id = request.query_params.get("userId")
+            if not user_id:
+                return Response(
+                    {"message": "User ID is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get jobs posted by the user
+            user_jobs = Job.objects.filter(client_id=user_id)
+
+            # Get all applications for those jobs
+            applications_data = []
+            for job in user_jobs:
+                job_applications = JobAcceptance.objects.filter(job=job)
+
+                for application in job_applications:
+                    for seeker in application.job_seekers.all():
+                        applications_data.append(
+                            {
+                                "application_id": str(application.id),
+                                "job_title": job.title,
+                                "job_description": job.description,
+                                "budget": str(job.budget),
+                                "application_status": application.status,
+                                "applied_date": application.created_at,
+                                "applicant_name": seeker.full_name,  # Changed from first_name + last_name
+                                "applicant_email": seeker.email,
+                                "applicant_phone": seeker.phone_number,  # Make sure this matches your model field name
+                                "service_category": job.service_category.name,
+                            }
+                        )
+
+            return Response(
+                {
+                    "message": "Applications fetched successfully",
+                    "data": applications_data,
+                    "status": "success",
+                }
+            )
+
+        except User.DoesNotExist:
+            return Response(
+                {"message": "User not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -13,8 +13,7 @@ const JobSeeker = () => {
   const [profileError, setProfileError] = useState(null);
 
   const [userProfile, setUserProfile] = useState({
-    first_name: "",
-    last_name: "",
+    full_name: "",
     email: "",
     mobile_number: "",
     address: "",
@@ -35,6 +34,12 @@ const JobSeeker = () => {
   const [applications, setApplications] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
   const [applicationsError, setApplicationsError] = useState(null);
+
+  const [requestedApplications, setRequestedApplications] = useState([]);
+  const [requestedApplicationsLoading, setRequestedApplicationsLoading] =
+    useState(false);
+  const [requestedApplicationsError, setRequestedApplicationsError] =
+    useState(null);
 
   const handleSaveProfile = (updatedProfile) => {
     setUserProfile(updatedProfile);
@@ -82,6 +87,26 @@ const JobSeeker = () => {
       );
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const fetchRequestedApplications = async () => {
+    try {
+      setRequestedApplicationsLoading(true);
+      const userId = localStorage.getItem("userId");
+      const response = await axios.get(
+        `http://localhost:8000/api/user/requested-applications/?userId=${userId}`
+      );
+      setRequestedApplications(response.data.data);
+      setRequestedApplicationsError(null);
+    } catch (error) {
+      console.error("Error fetching requested applications:", error);
+      setRequestedApplicationsError(
+        error.response?.data?.message ||
+          "Failed to fetch requested applications"
+      );
+    } finally {
+      setRequestedApplicationsLoading(false);
     }
   };
 
@@ -141,6 +166,12 @@ const JobSeeker = () => {
     };
 
     loadApplications();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "applications") {
+      fetchRequestedApplications();
+    }
   }, [activeTab]);
 
   const getStatusColor = (status) => {
@@ -552,6 +583,84 @@ const JobSeeker = () => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
+
+            {/* <h1 className="text-2xl font-bold text-gray-800 mt-8">
+              Requested Applications
+            </h1> */}
+
+            {requestedApplicationsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : requestedApplicationsError ? (
+              <div className="text-center text-red-600 py-8">
+                {requestedApplicationsError}
+              </div>
+            ) : requestedApplications.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                {/* No requested applications found */}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {requestedApplications.map((application) => (
+                  <Card key={application.application_id} className="w-full">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {application.job_title}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {application.service_category}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
+                            application.application_status
+                          )}`}
+                        >
+                          {application.application_status}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Applicant</p>
+                          <p className="font-medium">
+                            {application.applicant_name}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {application.applicant_email}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {application.applicant_phone}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Details</p>
+                          <p className="font-medium">
+                            Budget: ${application.budget}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Applied:{" "}
+                            {new Date(
+                              application.applied_date
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500">Job Description</p>
+                        <p className="text-gray-600 mt-1">
+                          {application.job_description}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>

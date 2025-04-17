@@ -10,6 +10,7 @@ from .views import (
     JobApplicationView,
     MyApplicationsView,
     UserProfileUpdateView,
+    RequestedApplicationsView,
 )
 
 urlpatterns = [
@@ -27,4 +28,9 @@ urlpatterns = [
     path("jobs/apply/", JobApplicationView.as_view(), name="job-apply"),
     path("jobs/my-applications/", MyApplicationsView.as_view(), name="my-applications"),
     path("user/profile/", UserProfileUpdateView.as_view(), name="user-profile"),
+    path(
+        "user/requested-applications/",
+        RequestedApplicationsView.as_view(),
+        name="requested-applications",
+    ),
 ]
