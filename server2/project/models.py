@@ -28,8 +28,7 @@ class User(models.Model):
         ("other", "Other"),
     ]
 
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    full_name = models.CharField(max_length=100, default="sample")
     email = models.EmailField(unique=True, default="sample@gmail.com")
     user_type = models.CharField(
         max_length=10, choices=USER_TYPE_CHOICES, default="client"
@@ -54,9 +53,10 @@ class User(models.Model):
     hourly_rate = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
+    works = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.id})"
+        return f"{self.full_name}  ({self.id})"
 
 
 class Job(models.Model):

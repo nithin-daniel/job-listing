@@ -6,8 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "first_name",
-            "last_name",
+            "full_name",
             "email",
             "user_type",
             "mobile_number",
@@ -19,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
             "experience",
             "service_category",
             "hourly_rate",
+            "works",
         ]
 
     def validate(self, data):

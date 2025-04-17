@@ -9,20 +9,23 @@ import EditProfile from "./EditProfile";
 const JobSeeker = () => {
   const [activeTab, setActiveTab] = useState("search");
   const [isEditing, setIsEditing] = useState(false);
-  const userInitials = "JS";
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
 
-  // Mock user profile data
   const [userProfile, setUserProfile] = useState({
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 234 567 8900",
-    location: "San Francisco, CA",
-    experience: "5 years",
-    skills: ["Plumbing", "Electrical", "Carpentry"],
-    certifications: ["Certified Plumber", "Electrical Safety"],
-    rating: 4.8,
-    completedJobs: 45,
-    bio: "Experienced handyman with expertise in plumbing and electrical work. Committed to providing quality service and customer satisfaction.",
+    first_name: "",
+    last_name: "",
+    email: "",
+    mobile_number: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    highest_qualification: "",
+    experience: 0,
+    service_category: "",
+    hourly_rate: "",
+    works: 0,
   });
 
   const [availableJobs, setAvailableJobs] = useState([]);
@@ -57,18 +60,30 @@ const JobSeeker = () => {
     }
   };
 
-  // const fetchMyApplications = async () => {
-  //   try {
-  //     const userId = localStorage.getItem("userId");
-  //     const response = await axios.get(
-  //       `http://localhost:8000/api/jobs/my-applications/?userId=${userId}`
-  //     );
-  //     return response.data;
-  //   } catch (error) {
-  //     console.error("Error fetching applications:", error);
-  //     throw error;
-  //   }
-  // };
+  const fetchUserProfile = async () => {
+    try {
+      setProfileLoading(true);
+      const response = await axios.get(
+        `http://localhost:8000/api/user/profile/?userId=${localStorage.getItem(
+          "userId"
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setUserProfile(response.data.data);
+      setProfileError(null);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      setProfileError(
+        error.response?.data?.message || "Failed to fetch profile"
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   const handleJobApplication = async (jobId) => {
     try {
@@ -83,7 +98,7 @@ const JobSeeker = () => {
         "http://localhost:8000/api/jobs/apply/",
         {
           job_id: jobId,
-          userId: userId, // Changed from user_id to userId to match backend
+          userId: userId,
         }
       );
 
@@ -100,6 +115,7 @@ const JobSeeker = () => {
 
   useEffect(() => {
     fetchAvailableJobs();
+    fetchUserProfile();
   }, []);
 
   useEffect(() => {
@@ -196,8 +212,14 @@ const JobSeeker = () => {
   };
 
   const ProfileSection = () => (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      {isEditing ? (
+    <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
+      {profileLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : profileError ? (
+        <div className="text-center text-red-600 py-8">{profileError}</div>
+      ) : isEditing ? (
         <EditProfile
           profile={userProfile}
           onSave={handleSaveProfile}
@@ -205,91 +227,67 @@ const JobSeeker = () => {
         />
       ) : (
         <>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
-                {userInitials}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-6">
+              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-black text-3xl font-bold">
+                {userProfile.full_name?.charAt(0)}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {userProfile.name}
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {userProfile.full_name}
                 </h2>
-                <p className="text-gray-600">{userProfile.location}</p>
-                <div className="flex items-center mt-1">
-                  <span className="text-yellow-400">★</span>
-                  <span className="ml-1 text-gray-600">
-                    {userProfile.rating} ({userProfile.completedJobs} jobs)
-                  </span>
-                </div>
+                <p className="text-gray-600 text-lg">{`${userProfile.city}, ${userProfile.state}`}</p>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
-                {userProfile.completedJobs} Jobs Completed
-              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Contact Information
+                Contact Details
               </h3>
-              <div className="space-y-2">
-                <p className="text-gray-600">
-                  <span className="font-medium">Email:</span>{" "}
-                  {userProfile.email}
+              <div className="space-y-3">
+                <p className="text-gray-600 flex justify-between">
+                  <span className="font-medium w-1/3">Email:</span>
+                  <span className="w-2/3">{userProfile.email}</span>
                 </p>
-                <p className="text-gray-600">
-                  <span className="font-medium">Phone:</span>{" "}
-                  {userProfile.phone}
+                <p className="text-gray-600 flex justify-between">
+                  <span className="font-medium w-1/3">Phone:</span>
+                  <span className="w-2/3">{userProfile.mobile_number}</span>
+                </p>
+                <p className="text-gray-600 flex justify-between">
+                  <span className="font-medium w-1/3">Address:</span>
+                  <span className="w-2/3">{userProfile.address}</span>
+                </p>
+                <p className="text-gray-600 flex justify-between">
+                  <span className="font-medium w-1/3">Pincode:</span>
+                  <span className="w-2/3">{userProfile.pincode}</span>
                 </p>
               </div>
             </div>
 
-            <div>
+            <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Professional Details
               </h3>
               <div className="space-y-2">
                 <p className="text-gray-600">
                   <span className="font-medium">Experience:</span>{" "}
-                  {userProfile.experience}
+                  {userProfile.experience} years
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {userProfile.skills.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+                <p className="text-gray-600">
+                  <span className="font-medium">Hourly Rate:</span> $
+                  {userProfile.hourly_rate}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Qualification:</span>{" "}
+                  {userProfile.highest_qualification}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Completed Works:</span>{" "}
+                  {userProfile.works}
+                </p>
               </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Certifications
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {userProfile.certifications.map((cert, index) => (
-                  <span
-                    key={index}
-                    className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
-                  >
-                    {cert}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                About Me
-              </h3>
-              <p className="text-gray-600">{userProfile.bio}</p>
             </div>
           </div>
 
@@ -314,12 +312,15 @@ const JobSeeker = () => {
           {/* Profile Section */}
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-lg">
-                {userInitials}
-              </div>
+              {/* <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                {`${userProfile.full_name}`}
+              </div> */}
               <div>
-                <p className="font-medium text-gray-900">{userProfile.name}</p>
+                <p className="font-medium text-gray-900">{`${userProfile.full_name}`}</p>
                 <p className="text-sm text-gray-500">Job Seeker</p>
+                <p className="text-sm text-blue-600">
+                  {userProfile.works} works completed
+                </p>
               </div>
             </div>
           </div>

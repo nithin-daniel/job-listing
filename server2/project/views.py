@@ -291,7 +291,7 @@ class UserProfileUpdateView(APIView):
 
     def put(self, request):
         try:
-            user_id = request.data.get("userId")
+            user_id = request.query_params.get("userId")
             if not user_id:
                 return Response(
                     {"message": "User ID is required", "status": "error"},
