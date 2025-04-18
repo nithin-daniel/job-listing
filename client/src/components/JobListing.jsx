@@ -13,82 +13,59 @@ const JobListing = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [clientJobs, setClientJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [jobApplications, setJobApplications] = useState([]);
   const userInitials = "AK"; // This should come from user context/state
 
-  // Mock applicants data
-  const applicants = [
-    {
-      id: 1,
-      name: "John Smith",
-      email: "john.smith@example.com",
-      experience: "5 years",
-      status: "pending",
-      appliedDate: "2024-03-20",
-      coverLetter: "I have extensive experience in home renovation...",
-      attachments: ["resume.pdf", "portfolio.pdf"],
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sarah.j@example.com",
-      experience: "8 years",
-      status: "pending",
-      appliedDate: "2024-03-19",
-      coverLetter: "As a certified contractor with 8 years of experience...",
-      attachments: ["resume.pdf"],
-    },
-  ];
-
-  const jobPosts = [
-    {
-      id: 1,
-      user: {
-        name: "John Doe",
-        avatar: "JD",
-        location: "New York",
-      },
-      content: {
-        text: "Looking for a professional plumber to fix a leaking pipe in my kitchen. The issue needs immediate attention.",
-        media: [
-          {
-            type: "image",
-            url: "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-        ],
-      },
-      service: "Plumbing",
-      budget: "$150",
-      date: "2h ago",
-      status: "open",
-      likes: 12,
-      comments: 3,
-    },
-    {
-      id: 2,
-      user: {
-        name: "Jane Smith",
-        avatar: "JS",
-        location: "Los Angeles",
-      },
-      content: {
-        text: "Need an electrician to install new lighting fixtures in my living room. Must have experience with modern LED systems.",
-        media: [
-          {
-            type: "video",
-            url: "https://example.com/video.mp4",
-            thumbnail:
-              "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          },
-        ],
-      },
-      service: "Electrical",
-      budget: "$300",
-      date: "5h ago",
-      status: "open",
-      likes: 8,
-      comments: 2,
-    },
-  ];
+  // const jobPosts = [
+  //   {
+  //     id: 1,
+  //     user: {
+  //       name: "John Doe",
+  //       avatar: "JD",
+  //       location: "New York",
+  //     },
+  //     content: {
+  //       text: "Looking for a professional plumber to fix a leaking pipe in my kitchen. The issue needs immediate attention.",
+  //       media: [
+  //         {
+  //           type: "image",
+  //           url: "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+  //         },
+  //       ],
+  //     },
+  //     service: "Plumbing",
+  //     budget: "$150",
+  //     date: "2h ago",
+  //     status: "open",
+  //     likes: 12,
+  //     comments: 3,
+  //   },
+  //   {
+  //     id: 2,
+  //     user: {
+  //       name: "Jane Smith",
+  //       avatar: "JS",
+  //       location: "Los Angeles",
+  //     },
+  //     content: {
+  //       text: "Need an electrician to install new lighting fixtures in my living room. Must have experience with modern LED systems.",
+  //       media: [
+  //         {
+  //           type: "video",
+  //           url: "https://example.com/video.mp4",
+  //           thumbnail:
+  //             "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+  //         },
+  //       ],
+  //     },
+  //     service: "Electrical",
+  //     budget: "$300",
+  //     date: "5h ago",
+  //     status: "open",
+  //     likes: 8,
+  //     comments: 2,
+  //   },
+  // ];
 
   const fetchServiceCategories = async () => {
     try {
@@ -143,6 +120,19 @@ const JobListing = () => {
     }
   };
 
+  const fetchJobApplications = async (jobId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/jobs-requests/?job_id=${jobId}`
+      );
+      if (response.data.status === "success") {
+        setJobApplications(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching job applications:", error);
+    }
+  };
+
   useEffect(() => {
     fetchServiceCategories();
   }, []);
@@ -171,6 +161,7 @@ const JobListing = () => {
   const handleViewApplications = (job) => {
     setSelectedJob(job);
     setViewingApplications(true);
+    fetchJobApplications(job.id); // Add this line to fetch applications when viewing
   };
 
   const handleApplicationAction = (applicantId, action) => {
@@ -256,23 +247,23 @@ const JobListing = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {applicants.map((applicant) => (
-                    <tr key={applicant.id} className="hover:bg-gray-50">
+                  {jobApplications.map((applicant) => (
+                    <tr
+                      key={applicant.applicant_name}
+                      className="hover:bg-gray-50"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="font-medium text-gray-900">
-                            {applicant.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {applicant.email}
+                            {applicant.applicant_name}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {applicant.experience}
+                        {applicant.experience} years
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {applicant.appliedDate}
+                        {new Date(applicant.applied_date).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -293,7 +284,10 @@ const JobListing = () => {
                             variant="outline"
                             className="bg-green-500 hover:bg-green-600 text-white"
                             onClick={() =>
-                              handleApplicationAction(applicant.id, "accept")
+                              handleApplicationAction(
+                                applicant.applicant_name,
+                                "accept"
+                              )
                             }
                           >
                             Accept
@@ -302,7 +296,10 @@ const JobListing = () => {
                             variant="outline"
                             className="bg-red-500 hover:bg-red-600 text-white"
                             onClick={() =>
-                              handleApplicationAction(applicant.id, "reject")
+                              handleApplicationAction(
+                                applicant.applicant_name,
+                                "reject"
+                              )
                             }
                           >
                             Reject

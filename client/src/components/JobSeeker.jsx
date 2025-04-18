@@ -94,11 +94,11 @@ const JobSeeker = () => {
     try {
       setRequestedApplicationsLoading(true);
       const userId = localStorage.getItem("userId");
-      const response = await axios.get(
-        `http://localhost:8000/api/user/requested-applications/?userId=${userId}`
-      );
-      setRequestedApplications(response.data.data);
-      setRequestedApplicationsError(null);
+      // const response = await axios.get(
+      //   `http://localhost:8000/api/user/requested-applications/?userId=${userId}`
+      // );
+      // setRequestedApplications(response.data.data);
+      // setRequestedApplicationsError(null);
     } catch (error) {
       console.error("Error fetching requested applications:", error);
       setRequestedApplicationsError(

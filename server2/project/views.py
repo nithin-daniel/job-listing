@@ -131,7 +131,7 @@ class UserPostedJobsView(APIView):
             )
 
         try:
-            jobs = Job.objects.filter(client_id=user_id).order_by("-created_at")
+            jobs = Job.objects.filter(user_id=user_id).order_by("-created_at")
             serializer = JobSerializer(jobs, many=True)
 
             return Response(
@@ -256,15 +256,17 @@ class MyApplicationsView(APIView):
                 job = application.job
                 application_data.append(
                     {
-                        "id": str(application.id),
+                        "id": str(application.id),  # Convert UUID to string
                         "job_title": job.title,
                         "job_description": job.description,
-                        "budget": str(job.budget),
+                        "budget": float(job.budget),  # Convert Decimal to float
                         "location": job.location,
-                        "client_name": job.client.full_name,  # Changed from f"{job.client.first_name} {job.client.last_name}"
-                        "applied_date": application.created_at,
+                        "client_name": job.user.full_name,  # Changed from client to user
+                        "applied_date": application.created_at.isoformat(),  # Format datetime
                         "status": application.status,
-                        "service_category": job.service_category.name,
+                        "service_category": (
+                            job.service_category.name if job.service_category else None
+                        ),
                     }
                 )
 
@@ -364,7 +366,7 @@ class RequestedApplicationsView(APIView):
                 )
 
             # Get jobs posted by the user
-            user_jobs = Job.objects.filter(client_id=user_id)
+            user_jobs = Job.objects.filter(user_id=user_id)
 
             # Get all applications for those jobs
             applications_data = []
@@ -383,7 +385,7 @@ class RequestedApplicationsView(APIView):
                                 "applied_date": application.created_at,
                                 "applicant_name": seeker.full_name,  # Changed from first_name + last_name
                                 "applicant_email": seeker.email,
-                                "applicant_phone": seeker.phone_number,  # Make sure this matches your model field name
+                                "applicant_phone": seeker.mobile_number,  # Make sure this matches your model field name
                                 "service_category": job.service_category.name,
                             }
                         )
@@ -401,6 +403,45 @@ class RequestedApplicationsView(APIView):
                 {"message": "User not found", "status": "error"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class JobRequestListView(APIView):
+    def get(self, request):
+        try:
+            job_id = request.query_params.get("job_id")
+            if not job_id:
+                return Response(
+                    {"message": "Job ID is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            job_requests = JobAcceptance.objects.filter(job_id=job_id)
+
+            requests_data = []
+            for job_request in job_requests:
+                for applicant in job_request.job_seekers.all():
+                    requests_data.append(
+                        {
+                            "applicant_name": applicant.full_name,
+                            "experience": applicant.experience or "Not specified",
+                            "applied_date": job_request.created_at.strftime("%Y-%m-%d"),
+                            "status": job_request.status,
+                        }
+                    )
+
+            return Response(
+                {
+                    "message": "Job requests fetched successfully",
+                    "data": requests_data,
+                    "status": "success",
+                }
+            )
+
         except Exception as e:
             return Response(
                 {"message": str(e), "status": "error"},
