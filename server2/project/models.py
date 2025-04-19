@@ -69,6 +69,13 @@ class Job(models.Model):
     service_category = models.ForeignKey(
         ServiceCategory, on_delete=models.SET_NULL, null=True
     )
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_jobs",
+    )
     is_completed = models.BooleanField(default=False)
     budget = models.DecimalField(max_digits=10, decimal_places=2)
     location = models.CharField(max_length=200)
