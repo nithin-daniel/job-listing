@@ -249,6 +249,8 @@ class MyApplicationsView(APIView):
             # Get user's applications
             user = User.objects.get(id=user_id)
             applications = JobAcceptance.objects.filter(job_seekers=user)
+            if not applications.exists():
+                applications = JobAcceptance.objects.filter(assigned_to=user)
 
             # Prepare response data
             application_data = []
@@ -424,9 +426,30 @@ class JobRequestListView(APIView):
 
             requests_data = []
             for job_request in job_requests:
+                # Check if job is already assigned
+                if job_request.assigned_to:
+                    return Response(
+                        {
+                            "message": "Job already assigned",
+                            "data": {
+                                "application_id": str(job_request.assigned_to.id),
+                                "applicant_name": job_request.assigned_to.full_name,
+                                "experience": job_request.assigned_to.experience
+                                or "Not specified",
+                                "applied_date": job_request.created_at.strftime(
+                                    "%Y-%m-%d"
+                                ),
+                                "status": job_request.status,
+                            },
+                            "status": "success",
+                        }
+                    )
+
+                # If not assigned, return all applicants
                 for applicant in job_request.job_seekers.all():
                     requests_data.append(
                         {
+                            "application_id": str(applicant.id),
                             "applicant_name": applicant.full_name,
                             "experience": applicant.experience or "Not specified",
                             "applied_date": job_request.created_at.strftime("%Y-%m-%d"),
@@ -442,6 +465,41 @@ class JobRequestListView(APIView):
                 }
             )
 
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class JobRequestUpdateView(APIView):
+    def post(self, request):
+        try:
+            job_id = request.data.get("job_id")
+            applicantId = str(request.data.get("applicantId"))
+            if not job_id or not status:
+                return Response(
+                    {"message": "Job ID and status are required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                job_request = JobAcceptance.objects.get(job__id=job_id)
+                applicant = User.objects.get(id=applicantId)
+            except JobAcceptance.DoesNotExist:
+                return Response(
+                    {"message": "Job request not found", "status": "error"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            job_request.status = "accepted"
+            job_request.assigned_to = applicant
+            job_request.job_seekers.remove(applicantId)
+            job_request.save()
+            return Response(
+                {
+                    "message": "Job request status updated successfully",
+                    "status": "success",
+                }
+            )
         except Exception as e:
             return Response(
                 {"message": str(e), "status": "error"},

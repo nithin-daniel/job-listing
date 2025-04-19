@@ -83,7 +83,7 @@ class Job(models.Model):
 
     # Add any other fields you need
     def __str__(self):
-        return self.title
+        return str(self.id)
 
 
 class JobAcceptance(models.Model):
@@ -92,6 +92,9 @@ class JobAcceptance(models.Model):
     status = models.CharField(
         max_length=20, default="pending"
     )  # pending, accepted, rejected
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="assigned_job", null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

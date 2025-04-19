@@ -28,8 +28,7 @@ const Signup = () => {
   const [error, setError] = useState("");
   const [serviceCategories, setServiceCategories] = useState([]);
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
+    full_name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -39,9 +38,9 @@ const Signup = () => {
     state: "",
     pincode: "",
     // Worker specific fields
-    highest_qualification: "high_school", // Set default to first qualification
+    highest_qualification: "high_school",
     experience: "",
-    service_category: "", // This will be set in useEffect after fetching categories
+    service_category: "",
     hourly_rate: "",
   });
 
@@ -68,12 +67,7 @@ const Signup = () => {
   }, []);
 
   const validateForm = () => {
-    if (
-      !formData.first_name ||
-      !formData.last_name ||
-      !formData.email ||
-      !formData.password
-    ) {
+    if (!formData.full_name || !formData.email || !formData.password) {
       setError("Please fill in all required fields");
       return false;
     }
@@ -102,8 +96,7 @@ const Signup = () => {
     if (!validateForm()) return;
 
     const signupData = {
-      first_name: formData.first_name,
-      last_name: formData.last_name,
+      full_name: formData.full_name,
       email: formData.email,
       password: formData.password,
       mobile_number: formData.mobile_number,
@@ -209,43 +202,23 @@ const Signup = () => {
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="first_name"
-                      className="text-sm font-medium block text-left"
-                    >
-                      First Name
-                    </label>
-                    <Input
-                      id="first_name"
-                      type="text"
-                      placeholder="Enter your first name"
-                      value={formData.first_name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, first_name: e.target.value })
-                      }
-                      className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="last_name"
-                      className="text-sm font-medium block text-left"
-                    >
-                      Last Name
-                    </label>
-                    <Input
-                      id="last_name"
-                      type="text"
-                      placeholder="Enter your last name"
-                      value={formData.last_name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, last_name: e.target.value })
-                      }
-                      className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="full_name"
+                    className="text-sm font-medium block text-left"
+                  >
+                    Full Name
+                  </label>
+                  <Input
+                    id="full_name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.full_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, full_name: e.target.value })
+                    }
+                    className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  />
                 </div>
 
                 <div className="space-y-2">

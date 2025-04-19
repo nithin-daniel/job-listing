@@ -13,6 +13,7 @@ from .views import (
     RequestedApplicationsView,
     UserPostedJobsView,
     JobRequestListView,
+    JobRequestUpdateView,
 )
 
 urlpatterns = [
@@ -37,4 +38,9 @@ urlpatterns = [
     ),
     path("jobs/user-posted/", UserPostedJobsView.as_view(), name="user-posted-jobs"),
     path("jobs-requests/", JobRequestListView.as_view(), name="job-request-list"),
+    path(
+        "job-acceptance/",
+        JobRequestUpdateView.as_view(),
+        name="job-request-update",
+    ),
 ]

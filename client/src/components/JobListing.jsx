@@ -13,59 +13,8 @@ const JobListing = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [clientJobs, setClientJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [jobApplications, setJobApplications] = useState([]);
+  const [jobApplications, setJobApplications] = useState([]); // Initialize as an empty array
   const userInitials = "AK"; // This should come from user context/state
-
-  // const jobPosts = [
-  //   {
-  //     id: 1,
-  //     user: {
-  //       name: "John Doe",
-  //       avatar: "JD",
-  //       location: "New York",
-  //     },
-  //     content: {
-  //       text: "Looking for a professional plumber to fix a leaking pipe in my kitchen. The issue needs immediate attention.",
-  //       media: [
-  //         {
-  //           type: "image",
-  //           url: "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  //         },
-  //       ],
-  //     },
-  //     service: "Plumbing",
-  //     budget: "$150",
-  //     date: "2h ago",
-  //     status: "open",
-  //     likes: 12,
-  //     comments: 3,
-  //   },
-  //   {
-  //     id: 2,
-  //     user: {
-  //       name: "Jane Smith",
-  //       avatar: "JS",
-  //       location: "Los Angeles",
-  //     },
-  //     content: {
-  //       text: "Need an electrician to install new lighting fixtures in my living room. Must have experience with modern LED systems.",
-  //       media: [
-  //         {
-  //           type: "video",
-  //           url: "https://example.com/video.mp4",
-  //           thumbnail:
-  //             "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  //         },
-  //       ],
-  //     },
-  //     service: "Electrical",
-  //     budget: "$300",
-  //     date: "5h ago",
-  //     status: "open",
-  //     likes: 8,
-  //     comments: 2,
-  //   },
-  // ];
 
   const fetchServiceCategories = async () => {
     try {
@@ -125,11 +74,22 @@ const JobListing = () => {
       const response = await axios.get(
         `http://localhost:8000/api/jobs-requests/?job_id=${jobId}`
       );
+
+      // Check if job is already assigned
+      if (response.data.message === "Job already assigned") {
+        setJobApplications([response.data.data]); // Set as array with single item
+        return;
+      }
+
+      // For unassigned jobs with multiple applications
       if (response.data.status === "success") {
         setJobApplications(response.data.data);
+      } else {
+        setJobApplications([]);
       }
     } catch (error) {
       console.error("Error fetching job applications:", error);
+      setJobApplications([]); // Reset to empty array on error
     }
   };
 
@@ -164,13 +124,41 @@ const JobListing = () => {
     fetchJobApplications(job.id); // Add this line to fetch applications when viewing
   };
 
-  const handleApplicationAction = (applicantId, action) => {
-    // Handle accept/reject logic here
-    console.log(`Applicant ${applicantId} ${action}`);
+  const handleApplicationAction = async (applicantId, applicantname) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/api/job-acceptance/`,
+        {
+          applicantId: applicantId,
+          job_id: selectedJob.id,
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Application status updated successfully");
+        setViewingApplications(false);
+        setSelectedJob(null);
+      } else {
+        console.error("Failed to update application status");
+      }
+    } catch (error) {
+      console.error("Error updating application status:", error);
+    }
   };
 
   const ApplicationsView = () => {
     if (!selectedJob) return null;
+
+    // Add check for jobApplications
+    if (!Array.isArray(jobApplications)) {
+      return (
+        <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white/95 rounded-lg p-6">
+            <p>No applications available</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -280,30 +268,20 @@ const JobListing = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
-                            className="bg-green-500 hover:bg-green-600 text-white"
-                            onClick={() =>
-                              handleApplicationAction(
-                                applicant.applicant_name,
-                                "accept"
-                              )
-                            }
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="bg-red-500 hover:bg-red-600 text-white"
-                            onClick={() =>
-                              handleApplicationAction(
-                                applicant.applicant_name,
-                                "reject"
-                              )
-                            }
-                          >
-                            Reject
-                          </Button>
+                          {applicant.status !== "accepted" && (
+                            <Button
+                              variant="outline"
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                              onClick={() =>
+                                handleApplicationAction(
+                                  applicant.application_id,
+                                  selectedJob.id
+                                )
+                              }
+                            >
+                              Accept
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
