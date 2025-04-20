@@ -480,13 +480,44 @@ const JobSeeker = () => {
                           </span>
                         </div>
 
-                        <div className="flex justify-end">
-                          <Button
-                            className="bg-green-500 hover:bg-green-600 text-white"
-                            onClick={() => handleJobApplication(job.id)}
+                        <div className="flex flex-col gap-2">
+                          <a
+                            href={`https://maps.google.com/?q=${encodeURIComponent(
+                              job.location
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
                           >
-                            Apply Now
-                          </Button>
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                            </svg>
+                            View Location
+                          </a>
+                          <div className="flex justify-end">
+                            <Button
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                              onClick={() => handleJobApplication(job.id)}
+                            >
+                              Apply Now
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>

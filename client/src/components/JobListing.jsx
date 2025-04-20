@@ -436,7 +436,7 @@ const JobListing = () => {
                             {job.client_name}
                           </h3>
                           <span className="text-gray-500">•</span>
-                          <span className="text-gray-500">{job.location}</span>
+                          <span className="text-gray-500">{job.title}</span>
                           <span className="text-gray-500">•</span>
                           <span className="text-gray-500">
                             {new Date(job.created_at).toLocaleDateString()}
@@ -457,34 +457,50 @@ const JobListing = () => {
                         )}
 
                         {/* Job Details */}
-                        <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            {job.service_category_name}
-                          </span>
-                          <span>Budget: ${job.budget}</span>
-                          <span
-                            className={`px-2 py-1 rounded-full ${
-                              job.is_completed
-                                ? "bg-gray-100 text-gray-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {job.is_completed ? "Completed" : "Open"}
-                          </span>
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                          <div className="flex items-center space-x-4">
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              {job.service_category_name}
+                            </span>
+                            <a
+                              href={`https://maps.google.com/?q=${encodeURIComponent(
+                                job.location
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 flex items-center"
+                            >
+                              <svg
+                                className="w-4 h-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                              View Location
+                            </a>
+                            <span>Budget: ${job.budget}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span>
+                              {new Date(job.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="mt-4 flex items-center space-x-4">
-                          <Button
-                            variant="outline"
-                            className="bg-green-500 hover:bg-green-600 text-white"
-                            onClick={() => {
-                              /* Handle apply for job */
-                            }}
-                          >
-                            Apply for Job
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -515,7 +531,7 @@ const JobListing = () => {
                         <h3 className="text-lg font-semibold text-gray-900">
                           {job.title}
                         </h3>
-                        <p className="text-sm text-gray-500">{job.location}</p>
+                        <p className="text-sm text-gray-500">{job.title}</p>
                       </div>
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -548,6 +564,35 @@ const JobListing = () => {
                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                           {job.service_category_name}
                         </span>
+                        <a
+                          href={`https://maps.google.com/?q=${encodeURIComponent(
+                            job.location
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 flex items-center"
+                        >
+                          <svg
+                            className="w-4 h-4 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          View Location
+                        </a>
                         <span>Budget: ${job.budget}</span>
                       </div>
                       <div className="flex items-center space-x-2">

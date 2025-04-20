@@ -26,7 +26,7 @@ const AddJob = () => {
     budget: "",
     deadline: "",
     user: localStorage.getItem("userId") || "",
-    location: localStorage.getItem("pincode") || "",
+    location: "",
     image: null,
   });
 
@@ -234,7 +234,7 @@ const AddJob = () => {
                 <Input
                   id="location"
                   type="text"
-                  placeholder="Enter location"
+                  placeholder="Enter your google map link"
                   value={formData.location}
                   onChange={(e) =>
                     setFormData({ ...formData, location: e.target.value })
