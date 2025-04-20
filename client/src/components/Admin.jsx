@@ -6,52 +6,62 @@ import axios from "axios";
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [nonVerifiedUsers, setNonVerifiedUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (activeTab === "users") {
-      fetchNonVerifiedUsers();
-    }
-  }, [activeTab]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [completedJobs, setCompletedJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsError, setJobsError] = useState(null);
 
   const fetchNonVerifiedUsers = async () => {
-    setLoading(true);
-    setError("");
     try {
+      setLoading(true);
       const response = await axios.get(
         "http://127.0.0.1:8000/api/non-verified-users/"
       );
-      if (response.data.status === "success") {
-        setNonVerifiedUsers(response.data.data);
-      }
+      setNonVerifiedUsers(response.data.data);
     } catch (err) {
-      setError("Failed to fetch non-verified users");
       console.error("Error fetching non-verified users:", err);
+      setError("Failed to fetch non-verified users");
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchCompletedJobs = async () => {
+    try {
+      setJobsLoading(true);
+      const response = await axios.get(
+        "http://127.0.0.1:8000/api/jobs/completed/"
+      );
+      setCompletedJobs(response.data.data);
+    } catch (err) {
+      console.error("Error fetching completed jobs:", err);
+      setJobsError("Failed to fetch completed jobs");
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
   const handleAcceptUser = async (userId) => {
     try {
-      console.log("User ID before sending:", userId);
-      console.log("User ID type:", typeof userId);
-
       const response = await axios.patch(
         "http://127.0.0.1:8000/api/accept-user/",
-        { userId: userId.toString() } // Ensure it's a string
+        {
+          userId: userId,
+        }
       );
       if (response.data.status === "success") {
-        // Refresh the list
         fetchNonVerifiedUsers();
       }
     } catch (err) {
-      setError("Failed to accept user");
       console.error("Error accepting user:", err);
-      console.error("Error response:", err.response?.data);
     }
   };
+
+  useEffect(() => {
+    fetchNonVerifiedUsers();
+    fetchCompletedJobs();
+  }, []);
 
   // Mock users data
   const [users] = useState([
@@ -161,13 +171,23 @@ const Admin = () => {
             >
               User Management
             </button>
+            <button
+              onClick={() => setActiveTab("jobs")}
+              className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                activeTab === "jobs"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Completed Jobs
+            </button>
           </nav>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 p-6">
-        {activeTab === "users" && (
+        {activeTab === "users" ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-800">
@@ -241,6 +261,91 @@ const Admin = () => {
                               >
                                 Accept
                               </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-800">
+                Completed Jobs
+              </h1>
+            </div>
+
+            {jobsError && (
+              <div className="p-4 bg-red-100 text-red-700 rounded-md">
+                {jobsError}
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Budget
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Location
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Completed Date
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {jobsLoading ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center">
+                          Loading...
+                        </td>
+                      </tr>
+                    ) : completedJobs.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center">
+                          No completed jobs found
+                        </td>
+                      </tr>
+                    ) : (
+                      completedJobs.map((job) => (
+                        <tr key={job.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {job.title}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {job.description}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              ${job.budget}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {job.location}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {new Date(job.created_at).toLocaleDateString()}
                             </div>
                           </td>
                         </tr>

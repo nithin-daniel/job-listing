@@ -18,6 +18,7 @@ from .views import (
     JobCompleteView,
     NonVerifiedUsersView,
     AcceptUserView,
+    CompletedJobsView,
 )
 
 urlpatterns = [
@@ -53,4 +54,5 @@ urlpatterns = [
     ),
     path("jobs/delete/", JobDeleteView.as_view(), name="job-delete"),
     path("jobs/complete/", JobCompleteView.as_view(), name="job-complete"),
+    path("jobs/completed/", CompletedJobsView.as_view(), name="completed-jobs"),
 ]

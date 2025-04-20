@@ -648,3 +648,24 @@ class JobCompleteView(APIView):
                 {"message": str(e), "status": "error"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class CompletedJobsView(APIView):
+    def get(self, request):
+        try:
+            # Get all completed jobs
+            jobs = Job.objects.filter(is_completed=True).order_by("-created_at")
+            serializer = JobSerializer(jobs, many=True)
+
+            return Response(
+                {
+                    "message": "Completed jobs fetched successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
