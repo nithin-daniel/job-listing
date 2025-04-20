@@ -146,6 +146,25 @@ const JobListing = () => {
     }
   };
 
+  const handleDeleteJob = async (jobId) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8000/api/jobs/delete/`,
+        { data: { job_id: jobId } }
+      );
+
+      if (response.status === 200) {
+        // Refresh the jobs list after successful deletion
+        const updatedJobs = clientJobs.filter((job) => job.id !== jobId);
+        setClientJobs(updatedJobs);
+      } else {
+        console.error("Failed to delete job");
+      }
+    } catch (error) {
+      console.error("Error deleting job:", error);
+    }
+  };
+
   const ApplicationsView = () => {
     if (!selectedJob) return null;
 
@@ -615,6 +634,7 @@ const JobListing = () => {
                         <Button
                           variant="outline"
                           className="text-red-600 hover:bg-red-50"
+                          onClick={() => handleDeleteJob(job.id)}
                         >
                           Delete Job
                         </Button>

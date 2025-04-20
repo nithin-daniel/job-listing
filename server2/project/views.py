@@ -505,3 +505,21 @@ class JobRequestUpdateView(APIView):
                 {"message": str(e), "status": "error"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class JobDeleteView(APIView):
+    def delete(self, request):
+        try:
+            job_id = request.data.get("job_id")
+
+            job = Job.objects.get(id=job_id)
+            job.delete()
+            return Response(
+                {"message": "Job deleted successfully", "status": "success"},
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

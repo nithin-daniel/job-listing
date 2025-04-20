@@ -14,6 +14,7 @@ from .views import (
     UserPostedJobsView,
     JobRequestListView,
     JobRequestUpdateView,
+    JobDeleteView,
 )
 
 urlpatterns = [
@@ -43,4 +44,5 @@ urlpatterns = [
         JobRequestUpdateView.as_view(),
         name="job-request-update",
     ),
+    path("jobs/delete/", JobDeleteView.as_view(), name="job-delete"),
 ]
