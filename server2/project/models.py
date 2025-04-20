@@ -39,6 +39,7 @@ class User(models.Model):
     state = models.CharField(max_length=100)
     pincode = models.CharField(max_length=10)
     is_worker = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
     highest_qualification = models.CharField(
         max_length=100, choices=QUALIFICATION_CHOICES, blank=True, null=True
     )
@@ -75,6 +76,7 @@ class Job(models.Model):
         null=True,
         blank=True,
         related_name="assigned_jobs",
+        db_column="job_worker_id",  # Custom column name
     )
     is_completed = models.BooleanField(default=False)
     budget = models.DecimalField(max_digits=10, decimal_places=2)
@@ -83,7 +85,7 @@ class Job(models.Model):
 
     # Add any other fields you need
     def __str__(self):
-        return str(self.id)
+        return str(self.title)
 
 
 class JobAcceptance(models.Model):
@@ -93,7 +95,11 @@ class JobAcceptance(models.Model):
         max_length=20, default="pending"
     )  # pending, accepted, rejected
     assigned_to = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="assigned_job", null=True
+        User,
+        on_delete=models.CASCADE,
+        related_name="assigned_job",
+        null=True,
+        db_column="acceptance_worker_id",  # Different custom column name
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

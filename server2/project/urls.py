@@ -15,12 +15,19 @@ from .views import (
     JobRequestListView,
     JobRequestUpdateView,
     JobDeleteView,
+    JobCompleteView,
+    NonVerifiedUsersView,
+    AcceptUserView,
 )
 
 urlpatterns = [
     path("", views.index, name="index"),
     path("signup/", UserSignupView.as_view(), name="user-signup"),
     path("login/", UserLoginView.as_view(), name="user-login"),
+    path(
+        "non-verified-users/", NonVerifiedUsersView.as_view(), name="non_verified_users"
+    ),
+    path("accept-user/", AcceptUserView.as_view(), name="accept_user"),
     path(
         "service-categories/",
         ServiceCategoryListView.as_view(),
@@ -45,4 +52,5 @@ urlpatterns = [
         name="job-request-update",
     ),
     path("jobs/delete/", JobDeleteView.as_view(), name="job-delete"),
+    path("jobs/complete/", JobCompleteView.as_view(), name="job-complete"),
 ]

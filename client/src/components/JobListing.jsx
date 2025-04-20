@@ -101,15 +101,27 @@ const JobListing = () => {
     const fetchJobs = async () => {
       try {
         setLoading(true);
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+          console.error("User ID not found in localStorage");
+          setClientJobs([]);
+          return;
+        }
+
         if (activeTab === "my") {
           const response = await fetchUserPostedJobs();
           setClientJobs(response.data);
         } else {
           const response = await fetchAvailableJobs();
-          setClientJobs(response.data);
+          if (response.status === "success") {
+            setClientJobs(response.data);
+          } else {
+            setClientJobs([]);
+          }
         }
       } catch (error) {
         console.error("Error fetching jobs:", error);
+        setClientJobs([]);
       } finally {
         setLoading(false);
       }
@@ -162,6 +174,31 @@ const JobListing = () => {
       }
     } catch (error) {
       console.error("Error deleting job:", error);
+    }
+  };
+
+  const handleMarkAsDone = async (applicationId) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:8000/api/jobs/complete/`,
+        { job_id: selectedJob.id, user_id: applicationId }
+      );
+
+      if (response.status === 200) {
+        // Refresh the applications list
+        fetchJobApplications(selectedJob.id);
+        setViewingApplications(false);
+        setSelectedJob(null);
+        // Also refresh the jobs list
+        const updatedJobs = clientJobs.map((job) =>
+          job.id === selectedJob.id ? { ...job, is_completed: true } : job
+        );
+        setClientJobs(updatedJobs);
+      } else {
+        console.error("Failed to mark job as done");
+      }
+    } catch (error) {
+      console.error("Error marking job as done:", error);
     }
   };
 
@@ -301,6 +338,17 @@ const JobListing = () => {
                               Accept
                             </Button>
                           )}
+                          {applicant.status === "accepted" && (
+                            <Button
+                              variant="outline"
+                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                              onClick={() =>
+                                handleMarkAsDone(applicant.application_id)
+                              }
+                            >
+                              Done
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -406,7 +454,7 @@ const JobListing = () => {
           <h1 className="text-2xl font-bold text-gray-800">
             {activeTab === "all" ? "All Jobs" : "My Jobs"}
           </h1>
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -419,7 +467,7 @@ const JobListing = () => {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
         </div>
 
         {/* Content based on active tab */}
@@ -624,20 +672,28 @@ const JobListing = () => {
                     {/* Action Buttons */}
                     <div className="flex justify-between items-center pt-4 border-t">
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          className="text-blue-600 hover:bg-blue-50"
-                          onClick={() => handleViewApplications(job)}
-                        >
-                          View Applicants
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="text-red-600 hover:bg-red-50"
-                          onClick={() => handleDeleteJob(job.id)}
-                        >
-                          Delete Job
-                        </Button>
+                        {!job.is_completed ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              className="text-blue-600 hover:bg-blue-50"
+                              onClick={() => handleViewApplications(job)}
+                            >
+                              View Applicants
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="text-red-600 hover:bg-red-50"
+                              onClick={() => handleDeleteJob(job.id)}
+                            >
+                              Delete Job
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-full">
+                            Completed
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

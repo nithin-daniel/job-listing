@@ -61,7 +61,7 @@ const Login = () => {
         } else if (error.response.status === 401) {
           setError("Invalid credentials");
         } else {
-          setError("Server error. Please try again later");
+          setError(error.response.data.message);
         }
       } else if (error.request) {
         setError("Network error. Please check your connection");

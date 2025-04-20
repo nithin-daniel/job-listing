@@ -1,9 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import axios from "axios";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("users");
+  const [nonVerifiedUsers, setNonVerifiedUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (activeTab === "users") {
+      fetchNonVerifiedUsers();
+    }
+  }, [activeTab]);
+
+  const fetchNonVerifiedUsers = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/api/non-verified-users/"
+      );
+      if (response.data.status === "success") {
+        setNonVerifiedUsers(response.data.data);
+      }
+    } catch (err) {
+      setError("Failed to fetch non-verified users");
+      console.error("Error fetching non-verified users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptUser = async (userId) => {
+    try {
+      console.log("User ID before sending:", userId);
+      console.log("User ID type:", typeof userId);
+
+      const response = await axios.patch(
+        "http://127.0.0.1:8000/api/accept-user/",
+        { userId: userId.toString() } // Ensure it's a string
+      );
+      if (response.data.status === "success") {
+        // Refresh the list
+        fetchNonVerifiedUsers();
+      }
+    } catch (err) {
+      setError("Failed to accept user");
+      console.error("Error accepting user:", err);
+      console.error("Error response:", err.response?.data);
+    }
+  };
 
   // Mock users data
   const [users] = useState([
@@ -113,53 +161,25 @@ const Admin = () => {
             >
               User Management
             </button>
-            <button
-              onClick={() => setActiveTab("complaints")}
-              className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
-                activeTab === "complaints"
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              Complaints
-            </button>
           </nav>
-
-          <div className="mt-8">
-            <button
-              onClick={() => {
-                /* Handle logout */
-              }}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              <span>Logout</span>
-            </button>
-          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 p-6">
-        {activeTab === "users" ? (
+        {activeTab === "users" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-800">
                 User Management
               </h1>
             </div>
+
+            {error && (
+              <div className="p-4 bg-red-100 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
               <div className="overflow-x-auto">
@@ -173,134 +193,59 @@ const Admin = () => {
                         Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Join Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {/* Actions */}
+                        Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {user.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {user.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getUserTypeColor(
-                              user.type
-                            )}`}
-                          >
-                            {user.type.replace("_", " ")}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                              user.status
-                            )}`}
-                          >
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.joinDate}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex space-x-2">
-                            {/* <Button
-                              variant="outline"
-                              className="text-blue-600 hover:bg-blue-50"
-                            >
-                              Edit
-                            </Button> */}
-                            {/* <Button
-                              variant="outline"
-                              className="text-red-600 hover:bg-red-50"
-                            >
-                              Suspend
-                            </Button> */}
-                          </div>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="3" className="px-6 py-4 text-center">
+                          Loading...
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-800">Complaints</h1>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Subject
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {complaints.map((complaint) => (
-                      <tr key={complaint.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {complaint.user}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {complaint.type}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {complaint.subject}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {complaint.description}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {complaint.date}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                              complaint.status
-                            )}`}
-                          >
-                            {complaint.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex space-x-2"></div>
+                    ) : nonVerifiedUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="px-6 py-4 text-center">
+                          No non-verified users found
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      nonVerifiedUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.full_name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {user.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.user_type === "worker"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-purple-100 text-purple-800"
+                              }`}
+                            >
+                              {user.user_type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                className="bg-green-500 hover:bg-green-600 text-white"
+                                onClick={() => handleAcceptUser(user.id)}
+                              >
+                                Accept
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

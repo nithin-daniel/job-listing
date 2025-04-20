@@ -31,6 +31,11 @@ class UserLoginView(APIView):
 
         try:
             user = User.objects.get(email=email)
+            if not user.is_verified:
+                return Response(
+                    {"message": "Your account needs admin approval", "status": "error"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             return Response(
                 {
                     "message": "Login successful",
@@ -46,6 +51,60 @@ class UserLoginView(APIView):
             return Response(
                 {"message": "User not found", "status": "error"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class NonVerifiedUsersView(APIView):
+    def get(self, request):
+        try:
+            # Get all non-verified users
+            non_verified_users = User.objects.filter(is_verified=False)
+
+            # Serialize the users
+            serializer = UserSerializer(non_verified_users, many=True)
+
+            return Response(
+                {
+                    "message": "Non-verified users fetched successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class AcceptUserView(APIView):
+    def patch(self, request):
+        try:
+            user_id = request.data.get("userId")
+            if not user_id:
+                return Response(
+                    {"message": "User ID is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = User.objects.get(id=user_id)
+            user.is_verified = True
+            user.save()
+
+            return Response(
+                {"message": "User accepted successfully", "status": "success"},
+                status=status.HTTP_200_OK,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"message": "User not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -154,9 +213,24 @@ class JobsForSeekersView(APIView):
             # Get filter parameters from query string
             service_category = request.query_params.get("service_category")
             location = request.query_params.get("location")
+            user_id = request.query_params.get("userId")
+
+            # if not user_id:
+            #     return Response(
+            #         {"message": "User ID is required", "status": "error"},
+            #         status=status.HTTP_400_BAD_REQUEST,
+            #     )
 
             # Start with all jobs that are not completed
             jobs = Job.objects.filter(is_completed=False)
+
+            # Get all job IDs that the user has already applied for
+            applied_job_ids = JobAcceptance.objects.filter(
+                job_seekers__id=user_id
+            ).values_list("job_id", flat=True)
+
+            # Exclude jobs that the user has already applied for
+            jobs = jobs.exclude(id__in=applied_job_ids)
 
             # Apply filters if provided
             if service_category:
@@ -517,6 +591,57 @@ class JobDeleteView(APIView):
             return Response(
                 {"message": "Job deleted successfully", "status": "success"},
                 status=status.HTTP_204_NO_CONTENT,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class JobCompleteView(APIView):
+    def post(self, request):
+        try:
+            job_id = request.data.get("job_id")
+            user_id = request.data.get("user_id")
+            if not job_id:
+                return Response(
+                    {"message": "Job ID is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get the job and update its status
+            job = Job.objects.get(id=job_id)
+            job.is_completed = True
+            job.save()
+            user = User.objects.get(id=user_id)
+            user.works += 1
+            user.save()
+            # Update the job acceptance status if it exists
+            try:
+                job_acceptance = JobAcceptance.objects.get(job=job)
+                job_acceptance.status = "completed"
+                job_acceptance.save()
+
+                # Update the assigned worker's works count
+                if job_acceptance.assigned_to:
+                    worker = job_acceptance.assigned_to
+                    worker.works += 1
+                    worker.save()
+            except JobAcceptance.DoesNotExist:
+                pass  # If no job acceptance exists, that's fine
+
+            return Response(
+                {
+                    "message": "Job marked as completed successfully",
+                    "status": "success",
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Job.DoesNotExist:
+            return Response(
+                {"message": "Job not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             return Response(
