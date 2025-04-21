@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { handleLogout } from "../utils/auth";
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("users");
   const [nonVerifiedUsers, setNonVerifiedUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -12,6 +15,9 @@ const Admin = () => {
   const [completedJobs, setCompletedJobs] = useState([]);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [jobsError, setJobsError] = useState(null);
+  const [complaintsList, setComplaintsList] = useState([]);
+  const [complaintsLoading, setComplaintsLoading] = useState(true);
+  const [complaintsError, setComplaintsError] = useState(null);
 
   const fetchNonVerifiedUsers = async () => {
     try {
@@ -56,6 +62,19 @@ const Admin = () => {
     }
   };
 
+  const fetchComplaints = async () => {
+    try {
+      setComplaintsLoading(true);
+      const response = await axios.get("http://127.0.0.1:8000/api/complaints/");
+      setComplaintsList(response.data.data);
+    } catch (err) {
+      console.error("Error fetching complaints:", err);
+      setComplaintsError("Failed to fetch complaints");
+    } finally {
+      setComplaintsLoading(false);
+    }
+  };
+
   const handleAcceptUser = async (userId) => {
     try {
       const response = await axios.patch(
@@ -93,6 +112,7 @@ const Admin = () => {
     fetchNonVerifiedUsers();
     fetchAllUsers();
     fetchCompletedJobs();
+    fetchComplaints();
   }, []);
 
   // Mock users data
@@ -223,12 +243,31 @@ const Admin = () => {
             >
               Completed Jobs
             </button>
+            <button
+              onClick={() => setActiveTab("complaints")}
+              className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                activeTab === "complaints"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Complaints
+            </button>
           </nav>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 p-6">
+        <div className="flex justify-end mb-6">
+          <Button
+            onClick={() => handleLogout(navigate)}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            Logout
+          </Button>
+        </div>
+
         {activeTab === "users" ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -407,7 +446,7 @@ const Admin = () => {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeTab === "jobs" ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-800">
@@ -482,6 +521,83 @@ const Admin = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">
                               {new Date(job.created_at).toLocaleDateString()}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-800">Complaints</h1>
+            </div>
+
+            {complaintsError && (
+              <div className="p-4 bg-red-100 text-red-700 rounded-md">
+                {complaintsError}
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Details
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {complaintsLoading ? (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center">
+                          Loading...
+                        </td>
+                      </tr>
+                    ) : complaintsList.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center">
+                          No complaints found
+                        </td>
+                      </tr>
+                    ) : (
+                      complaintsList.map((complaint) => (
+                        <tr key={complaint.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {complaint.user_full_name || "Unknown User"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {complaint.title}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-500">
+                              {complaint.details}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {new Date(
+                                complaint.created_at
+                              ).toLocaleDateString()}
                             </div>
                           </td>
                         </tr>

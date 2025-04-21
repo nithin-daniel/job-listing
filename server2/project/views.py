@@ -4,8 +4,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from .serializers import UserSerializer, ServiceCategorySerializer, JobSerializer
-from .models import ServiceCategory, User, Job, JobAcceptance
+from .serializers import (
+    UserSerializer,
+    ServiceCategorySerializer,
+    JobSerializer,
+    JobAcceptanceSerializer,
+    ComplaintSerializer,
+)
+from .models import ServiceCategory, User, Job, JobAcceptance, Complaint
 
 
 # Create your views here.
@@ -20,6 +26,9 @@ class UserSignupView(APIView):
             user = serializer.save()
             if request.data.get("user_type") == "worker":
                 user.is_worker = True
+                user.save()
+            else:
+                user.is_verified = True
                 user.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -712,6 +721,67 @@ class AllUsersView(APIView):
             return Response(
                 {
                     "message": "Users fetched successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ComplaintCreateView(APIView):
+    def post(self, request):
+        try:
+            user_id = request.data.get("userId")
+            if not user_id:
+                return Response(
+                    {"message": "User ID is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = User.objects.get(id=user_id)
+            serializer = ComplaintSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=user)
+                return Response(
+                    {
+                        "message": "Complaint submitted successfully",
+                        "data": serializer.data,
+                        "status": "success",
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            return Response(
+                {
+                    "message": "Invalid data",
+                    "errors": serializer.errors,
+                    "status": "error",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"message": "User not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class ComplaintsListView(APIView):
+    def get(self, request):
+        try:
+            complaints = Complaint.objects.all().order_by("-created_at")
+            serializer = ComplaintSerializer(complaints, many=True)
+            return Response(
+                {
+                    "message": "Complaints fetched successfully",
                     "data": serializer.data,
                     "status": "success",
                 }

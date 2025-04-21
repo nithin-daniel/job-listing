@@ -21,6 +21,8 @@ from .views import (
     CompletedJobsView,
     DeleteUserView,
     AllUsersView,
+    ComplaintCreateView,
+    ComplaintsListView,
 )
 
 urlpatterns = [
@@ -59,4 +61,6 @@ urlpatterns = [
     path("jobs/complete/", JobCompleteView.as_view(), name="job-complete"),
     path("jobs/completed/", CompletedJobsView.as_view(), name="completed-jobs"),
     path("user/delete/", DeleteUserView.as_view(), name="delete-user"),
+    path("complaints/create/", ComplaintCreateView.as_view(), name="complaint-create"),
+    path("complaints/", ComplaintsListView.as_view(), name="complaints-list"),
 ]

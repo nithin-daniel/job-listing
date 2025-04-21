@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import axios from "axios";
+import { handleLogout } from "../utils/auth";
 
 const JobListing = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [selectedJob, setSelectedJob] = useState(null);
   const [viewingApplications, setViewingApplications] = useState(false);
@@ -14,6 +16,11 @@ const JobListing = () => {
   const [clientJobs, setClientJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [jobApplications, setJobApplications] = useState([]); // Initialize as an empty array
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [complaintData, setComplaintData] = useState({
+    title: "",
+    details: "",
+  });
   const userInitials = "AK"; // This should come from user context/state
 
   const fetchServiceCategories = async () => {
@@ -199,6 +206,34 @@ const JobListing = () => {
       }
     } catch (error) {
       console.error("Error marking job as done:", error);
+    }
+  };
+
+  const handleComplaintSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        console.error("User ID not found");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:8000/api/complaints/create/",
+        {
+          ...complaintData,
+          userId: userId,
+        }
+      );
+
+      if (response.data.status === "success") {
+        setComplaintData({ title: "", details: "" });
+        setShowComplaintForm(false);
+        alert("Complaint submitted successfully");
+      }
+    } catch (error) {
+      console.error("Error submitting complaint:", error);
+      alert("Failed to submit complaint");
     }
   };
 
@@ -423,10 +458,8 @@ const JobListing = () => {
           </nav>
 
           <div className="mt-8">
-            <button
-              onClick={() => {
-                /* Handle logout */
-              }}
+            <Button
+              onClick={() => handleLogout(navigate)}
               className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
             >
               <svg
@@ -443,7 +476,7 @@ const JobListing = () => {
                 />
               </svg>
               <span>Logout</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -454,21 +487,76 @@ const JobListing = () => {
           <h1 className="text-2xl font-bold text-gray-800">
             {activeTab === "all" ? "All Jobs" : "My Jobs"}
           </h1>
-          {/* <div className="flex items-center space-x-4">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="block w-48 rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
-            >
-              <option value="">All Categories</option>
-              {serviceCategories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div> */}
+          <Button
+            onClick={() => setShowComplaintForm(true)}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            Submit Complaint
+          </Button>
         </div>
+
+        {/* Complaint Form Modal */}
+        {showComplaintForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Submit a Complaint</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleComplaintSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Title
+                    </label>
+                    <Input
+                      type="text"
+                      value={complaintData.title}
+                      onChange={(e) =>
+                        setComplaintData({
+                          ...complaintData,
+                          title: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Details
+                    </label>
+                    <textarea
+                      value={complaintData.details}
+                      onChange={(e) =>
+                        setComplaintData({
+                          ...complaintData,
+                          details: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      rows="4"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowComplaintForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-blue-500 hover:bg-blue-600"
+                    >
+                      Submit
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Content based on active tab */}
         {activeTab === "all" ? (

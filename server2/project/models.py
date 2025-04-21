@@ -105,3 +105,17 @@ class JobAcceptance(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class Complaint(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="complaints")
+    title = models.CharField(max_length=255)
+    details = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.full_name}"

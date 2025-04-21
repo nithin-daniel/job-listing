@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import EditProfile from "./EditProfile";
+import { handleLogout } from "../utils/auth";
 
 const JobSeeker = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("search");
   const [isEditing, setIsEditing] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -390,10 +392,8 @@ const JobSeeker = () => {
           </nav>
 
           <div className="mt-8">
-            <button
-              onClick={() => {
-                /* Handle logout */
-              }}
+            <Button
+              onClick={() => handleLogout(navigate)}
               className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
             >
               <svg
@@ -410,13 +410,21 @@ const JobSeeker = () => {
                 />
               </svg>
               <span>Logout</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 p-6">
+        <div className="flex justify-end mb-6">
+          <Button
+            onClick={() => handleLogout(navigate)}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            Logout
+          </Button>
+        </div>
         {activeTab === "profile" ? (
           <ProfileSection />
         ) : activeTab === "search" ? (

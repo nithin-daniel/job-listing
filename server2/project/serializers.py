@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, ServiceCategory, Job
+from .models import User, ServiceCategory, Job, JobAcceptance, Complaint
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -69,3 +69,25 @@ class JobSerializer(serializers.ModelSerializer):
         if obj.service_category:
             return obj.service_category.name
         return None
+
+
+class JobAcceptanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobAcceptance
+        fields = ["id", "job", "job_seekers", "assigned_to", "status", "created_at"]
+
+
+class ComplaintSerializer(serializers.ModelSerializer):
+    user_full_name = serializers.CharField(source="user.full_name", read_only=True)
+
+    class Meta:
+        model = Complaint
+        fields = [
+            "id",
+            "user",
+            "user_full_name",
+            "title",
+            "details",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "user", "user_full_name"]
