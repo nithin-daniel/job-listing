@@ -23,6 +23,7 @@ from .views import (
     AllUsersView,
     ComplaintCreateView,
     ComplaintsListView,
+    AdminRegistrationView,
 )
 
 urlpatterns = [
@@ -63,4 +64,5 @@ urlpatterns = [
     path("user/delete/", DeleteUserView.as_view(), name="delete-user"),
     path("complaints/create/", ComplaintCreateView.as_view(), name="complaint-create"),
     path("complaints/", ComplaintsListView.as_view(), name="complaints-list"),
+    path("admin/register/", AdminRegistrationView.as_view(), name="admin-register"),
 ]

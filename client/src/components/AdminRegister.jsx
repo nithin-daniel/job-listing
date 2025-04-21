@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -9,66 +10,43 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const Login = () => {
+const AdminRegister = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    registration_code: "",
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!formData.email || !formData.password) {
-      setError("Please fill in all fields");
-      return;
+    // Validate all fields
+    for (const [key, value] of Object.entries(formData)) {
+      if (!value) {
+        setError(`Please fill in the ${key.replace("_", " ")} field`);
+        return;
+      }
     }
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/login/",
-        formData,
-        {
-          withCredentials: true,
-        }
+        "http://127.0.0.1:8000/api/admin/register/",
+        formData
       );
 
-      if (response.status === 200) {
-        // Store user data in localStorage
-        localStorage.setItem("isWorker", response.data.is_worker);
-        localStorage.setItem("userEmail", formData.email);
-        localStorage.setItem("userId", response.data.client_id);
-        localStorage.setItem("pincode", response.data.pincode);
-        localStorage.setItem("userFullName", response.data.user_full_name);
-        localStorage.setItem("isAdmin", response.data.is_admin);
-
-        // Redirect based on user type
-        if (response.data.is_admin) {
-          navigate("/admin");
-        } else if (response.data.is_worker) {
-          navigate("/jobseeker");
-        } else {
-          navigate("/jobs");
-        }
+      if (response.status === 201) {
+        // Redirect to login page after successful registration
+        navigate("/login");
       }
     } catch (error) {
-      console.error("Login error:", error);
-
+      console.error("Registration error:", error);
       if (error.response) {
-        if (error.response.status === 404) {
-          setError("User not found");
-        } else if (error.response.status === 401) {
-          setError("Invalid credentials");
-        } else {
-          setError(error.response.data.message);
-        }
-      } else if (error.request) {
-        setError("Network error. Please check your connection");
+        setError(error.response.data.message || "Registration failed");
       } else {
         setError("An unexpected error occurred");
       }
@@ -80,10 +58,10 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
-            Login
+            Admin Registration
           </CardTitle>
           <CardDescription className="text-center">
-            Welcome back! Please login to your account
+            Register a new admin account with the secret code
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -93,6 +71,28 @@ const Login = () => {
                 {error}
               </div>
             )}
+
+            <div className="space-y-2">
+              <label
+                htmlFor="registration_code"
+                className="text-sm font-medium block"
+              >
+                Secret Registration Code
+              </label>
+              <Input
+                id="registration_code"
+                type="text"
+                placeholder="Enter the secret code"
+                value={formData.registration_code}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    registration_code: e.target.value,
+                  })
+                }
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium block">
@@ -132,17 +132,8 @@ const Login = () => {
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Login
+              Register Admin
             </Button>
-            <p className="text-sm text-center text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                to="/signup"
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Sign up
-              </Link>
-            </p>
           </CardFooter>
         </form>
       </Card>
@@ -150,4 +141,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default AdminRegister;

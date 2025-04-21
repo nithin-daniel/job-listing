@@ -409,7 +409,9 @@ const JobListing = () => {
                 {userInitials}
               </div>
               <div>
-                <p className="font-medium text-gray-900">Arjun Krishna</p>
+                <p className="font-medium text-gray-900">
+                  {localStorage.getItem("userFullName")}
+                </p>
                 <p className="text-sm text-gray-500">Client</p>
               </div>
             </div>

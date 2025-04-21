@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.utils import timezone
 
 
 # Create your models here.
@@ -17,6 +18,7 @@ class User(models.Model):
     USER_TYPE_CHOICES = [
         ("client", "Client"),
         ("worker", "Worker"),
+        ("admin", "Admin"),
     ]
 
     QUALIFICATION_CHOICES = [
@@ -40,6 +42,8 @@ class User(models.Model):
     pincode = models.CharField(max_length=10)
     is_worker = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+
     highest_qualification = models.CharField(
         max_length=100, choices=QUALIFICATION_CHOICES, blank=True, null=True
     )
@@ -119,3 +123,17 @@ class Complaint(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.full_name}"
+
+
+class AdminRegistrationCode(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Admin Code: {self.code} - {'Used' if self.is_used else 'Available'}"
+
+    class Meta:
+        verbose_name = "Admin Registration Code"
+        verbose_name_plural = "Admin Registration Codes"

@@ -11,7 +11,15 @@ from .serializers import (
     JobAcceptanceSerializer,
     ComplaintSerializer,
 )
-from .models import ServiceCategory, User, Job, JobAcceptance, Complaint
+from .models import (
+    ServiceCategory,
+    User,
+    Job,
+    JobAcceptance,
+    Complaint,
+    AdminRegistrationCode,
+)
+from django.utils import timezone
 
 
 # Create your views here.
@@ -37,6 +45,7 @@ class UserSignupView(APIView):
 class UserLoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
+        password = request.data.get("password")
 
         try:
             user = User.objects.get(email=email)
@@ -48,7 +57,9 @@ class UserLoginView(APIView):
             return Response(
                 {
                     "message": "Login successful",
+                    "user_full_name": user.full_name,
                     "is_worker": user.is_worker,
+                    "is_admin": user.is_admin,
                     "status": "success",
                     "client_id": user.id,
                     "pincode": user.pincode,
@@ -789,5 +800,98 @@ class ComplaintsListView(APIView):
         except Exception as e:
             return Response(
                 {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class AdminRegistrationView(APIView):
+    def post(self, request):
+        try:
+            # Get the registration code from request
+            registration_code = request.data.get("registration_code")
+            if not registration_code:
+                return Response(
+                    {"message": "Registration code is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Validate the registration code
+            try:
+                admin_code = AdminRegistrationCode.objects.get(
+                    code=registration_code, is_used=False
+                )
+            except AdminRegistrationCode.DoesNotExist:
+                return Response(
+                    {
+                        "message": "Invalid or already used registration code",
+                        "status": "error",
+                        "error": "Invalid or already used registration code",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Add default values for required fields
+            request.data.update(
+                {
+                    "user_type": "admin",
+                    "is_worker": False,
+                    "is_verified": True,
+                    "is_admin": True,
+                    "full_name": "Admin User",
+                    "mobile_number": "0000000000",
+                    "address": "Default Address",
+                    "city": "Default City",
+                    "state": "Default State",
+                    "pincode": "000000",
+                }
+            )
+
+            # Create the admin user
+            serializer = UserSerializer(data=request.data)
+            if serializer.is_valid():
+                try:
+                    # Set admin-specific fields
+                    user = serializer.save()
+                    user.is_admin = True
+                    user.is_verified = True
+                    user.save()
+
+                    # Mark the code as used
+                    admin_code.is_used = True
+                    admin_code.used_at = timezone.now()
+                    admin_code.save()
+
+                    return Response(
+                        {
+                            "message": "Admin user created successfully",
+                            "data": serializer.data,
+                            "status": "success",
+                        },
+                        status=status.HTTP_201_CREATED,
+                    )
+                except Exception as e:
+                    return Response(
+                        {
+                            "message": "Error creating admin user",
+                            "error": str(e),
+                            "status": "error",
+                        },
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+            return Response(
+                {
+                    "message": "Invalid data",
+                    "errors": serializer.errors,
+                    "status": "error",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "message": "An unexpected error occurred",
+                    "error": str(e),
+                    "status": "error",
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

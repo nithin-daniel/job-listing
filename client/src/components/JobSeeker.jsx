@@ -349,7 +349,9 @@ const JobSeeker = () => {
                 {`${userProfile.full_name}`}
               </div> */}
               <div>
-                <p className="font-medium text-gray-900">{`${userProfile.full_name}`}</p>
+                <p className="font-medium text-gray-900">
+                  {localStorage.getItem("userFullName")}
+                </p>
                 <p className="text-sm text-gray-500">Job Seeker</p>
                 <p className="text-sm text-blue-600">
                   {userProfile.works} works completed

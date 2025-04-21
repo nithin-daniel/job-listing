@@ -10,6 +10,7 @@ import JobListing from "./components/JobListing";
 import JobSeeker from "./components/JobSeeker";
 import AddJob from "./components/AddJob";
 import Admin from "./components/Admin";
+import AdminRegister from "./components/AdminRegister";
 import Navbar from "./components/Navbar";
 import { isAuthenticated, getUserRole } from "./utils/auth";
 import "./App.css";
@@ -64,6 +65,7 @@ function App() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/admin/register" element={<AdminRegister />} />
         <Route
           path="/jobs"
           element={
