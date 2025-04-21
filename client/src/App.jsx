@@ -15,9 +15,27 @@ import Navbar from "./components/Navbar";
 import { isAuthenticated, getUserRole } from "./utils/auth";
 import "./App.css";
 
+const AuthRoute = ({ children }) => {
+  if (isAuthenticated()) {
+    const userRole = getUserRole();
+    // Redirect to role-specific page
+    switch (userRole) {
+      case "worker":
+        return <Navigate to="/jobseeker" replace />;
+      case "client":
+        return <Navigate to="/jobs" replace />;
+      case "admin":
+        return <Navigate to="/admin" replace />;
+      default:
+        return <Navigate to="/" replace />;
+    }
+  }
+  return children;
+};
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
   if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const userRole = getUserRole();
@@ -46,26 +64,27 @@ function App() {
         <Route
           path="/"
           element={
-            <ProtectedRoute>
-              {(() => {
-                const userRole = getUserRole();
-                switch (userRole) {
-                  case "worker":
-                    return <Navigate to="/jobseeker" replace />;
-                  case "client":
-                    return <Navigate to="/jobs" replace />;
-                  case "admin":
-                    return <Navigate to="/admin" replace />;
-                  default:
-                    return <div className="p-4">Welcome to the Home Page</div>;
-                }
-              })()}
-            </ProtectedRoute>
+            <AuthRoute>
+              <Login />
+            </AuthRoute>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route
+          path="/signup"
+          element={
+            <AuthRoute>
+              <Signup />
+            </AuthRoute>
+          }
+        />
+        <Route
+          path="/admin/register"
+          element={
+            <AuthRoute>
+              <AdminRegister />
+            </AuthRoute>
+          }
+        />
         <Route
           path="/jobs"
           element={

@@ -45,7 +45,6 @@ class UserSignupView(APIView):
 class UserLoginView(APIView):
     def post(self, request):
         email = request.data.get("email")
-        password = request.data.get("password")
 
         try:
             user = User.objects.get(email=email)

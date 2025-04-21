@@ -78,16 +78,13 @@ class JobAcceptanceSerializer(serializers.ModelSerializer):
 
 
 class ComplaintSerializer(serializers.ModelSerializer):
-    user_full_name = serializers.CharField(source="user.full_name", read_only=True)
-
     class Meta:
         model = Complaint
         fields = [
             "id",
             "user",
-            "user_full_name",
             "title",
             "details",
             "created_at",
         ]
-        read_only_fields = ["id", "created_at", "user", "user_full_name"]
+        read_only_fields = ["id", "created_at", "user"]
