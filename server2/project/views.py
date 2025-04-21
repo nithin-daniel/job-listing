@@ -669,3 +669,55 @@ class CompletedJobsView(APIView):
                 {"message": str(e), "status": "error"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class DeleteUserView(APIView):
+    def delete(self, request):
+        try:
+            user_id = request.query_params.get("userId")
+            if not user_id:
+                return Response(
+                    {"message": "User ID is required", "status": "error"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user = User.objects.get(id=user_id)
+            user.delete()
+
+            return Response(
+                {"message": "User deleted successfully", "status": "success"},
+                status=status.HTTP_200_OK,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"message": "User not found", "status": "error"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class AllUsersView(APIView):
+    def get(self, request):
+        try:
+            # Get all users
+            users = User.objects.all()
+
+            # Serialize the users
+            serializer = UserSerializer(users, many=True)
+
+            return Response(
+                {
+                    "message": "Users fetched successfully",
+                    "data": serializer.data,
+                    "status": "success",
+                }
+            )
+        except Exception as e:
+            return Response(
+                {"message": str(e), "status": "error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

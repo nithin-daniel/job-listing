@@ -6,6 +6,7 @@ import axios from "axios";
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [nonVerifiedUsers, setNonVerifiedUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [completedJobs, setCompletedJobs] = useState([]);
@@ -22,6 +23,19 @@ const Admin = () => {
     } catch (err) {
       console.error("Error fetching non-verified users:", err);
       setError("Failed to fetch non-verified users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://127.0.0.1:8000/api/users/");
+      setAllUsers(response.data.data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError("Failed to fetch users");
     } finally {
       setLoading(false);
     }
@@ -52,14 +66,32 @@ const Admin = () => {
       );
       if (response.data.status === "success") {
         fetchNonVerifiedUsers();
+        fetchAllUsers();
       }
     } catch (err) {
       console.error("Error accepting user:", err);
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      try {
+        const response = await axios.delete(
+          `http://127.0.0.1:8000/api/user/delete/?userId=${userId}`
+        );
+        if (response.data.status === "success") {
+          fetchAllUsers();
+          fetchNonVerifiedUsers();
+        }
+      } catch (err) {
+        console.error("Error deleting user:", err);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchNonVerifiedUsers();
+    fetchAllUsers();
     fetchCompletedJobs();
   }, []);
 
@@ -172,6 +204,16 @@ const Admin = () => {
               User Management
             </button>
             <button
+              onClick={() => setActiveTab("non-verified")}
+              className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                activeTab === "non-verified"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Non-Verified Users
+            </button>
+            <button
               onClick={() => setActiveTab("jobs")}
               className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
                 activeTab === "jobs"
@@ -207,7 +249,10 @@ const Admin = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Type
@@ -220,13 +265,102 @@ const Admin = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {loading ? (
                       <tr>
-                        <td colSpan="3" className="px-6 py-4 text-center">
+                        <td colSpan="4" className="px-6 py-4 text-center">
+                          Loading...
+                        </td>
+                      </tr>
+                    ) : allUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center">
+                          No users found
+                        </td>
+                      </tr>
+                    ) : (
+                      allUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.full_name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {user.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.user_type === "worker"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-purple-100 text-purple-800"
+                              }`}
+                            >
+                              {user.user_type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                className="bg-red-500 hover:bg-red-600 text-white"
+                                onClick={() => handleDeleteUser(user.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "non-verified" ? (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-800">
+                Non-Verified Users
+              </h1>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-100 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
+
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {loading ? (
+                      <tr>
+                        <td colSpan="4" className="px-6 py-4 text-center">
                           Loading...
                         </td>
                       </tr>
                     ) : nonVerifiedUsers.length === 0 ? (
                       <tr>
-                        <td colSpan="3" className="px-6 py-4 text-center">
+                        <td colSpan="4" className="px-6 py-4 text-center">
                           No non-verified users found
                         </td>
                       </tr>
@@ -237,6 +371,8 @@ const Admin = () => {
                             <div className="text-sm font-medium text-gray-900">
                               {user.full_name}
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">
                               {user.email}
                             </div>
