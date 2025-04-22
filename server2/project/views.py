@@ -570,9 +570,12 @@ class JobRequestUpdateView(APIView):
         try:
             job_id = request.data.get("job_id")
             applicantId = str(request.data.get("applicantId"))
-            if not job_id or not status:
+            if not job_id or not applicantId:
                 return Response(
-                    {"message": "Job ID and status are required", "status": "error"},
+                    {
+                        "message": "Job ID and applicant ID are required",
+                        "status": "error",
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
@@ -583,16 +586,36 @@ class JobRequestUpdateView(APIView):
                     {"message": "Job request not found", "status": "error"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            except User.DoesNotExist:
+                return Response(
+                    {"message": "Applicant not found", "status": "error"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
             job_request.status = "accepted"
             job_request.assigned_to = applicant
             job_request.job_seekers.remove(applicantId)
             job_request.save()
-            return Response(
-                {
-                    "message": "Job request status updated successfully",
-                    "status": "success",
-                }
-            )
+
+            # Prepare response data
+            response_data = {
+                "message": "Job request status updated successfully",
+                "status": "success",
+                "data": {
+                    "job_request_id": str(job_request.id),
+                    "job_id": str(job_request.job.id),
+                    "job_title": job_request.job.title,
+                    "assigned_to": {
+                        "id": str(applicant.id),
+                        "name": applicant.full_name,
+                        "email": applicant.email,
+                        "phone": applicant.mobile_number,
+                    },
+                    "status": job_request.status,
+                },
+            }
+
+            return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"message": str(e), "status": "error"},

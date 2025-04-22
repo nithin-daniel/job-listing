@@ -157,6 +157,12 @@ const JobListing = () => {
         console.log("Application status updated successfully");
         setViewingApplications(false);
         setSelectedJob(null);
+        const worker_phone = response.data.data.assigned_to.phone;
+        const urlEncodedMessage = encodeURIComponent(
+          "I am interested to work with you"
+        );
+        const whatsappUrl = `https://wa.me/${worker_phone}?text=${urlEncodedMessage}`;
+        window.open(whatsappUrl, "_blank"); // Opens the link in a new tab
       } else {
         console.error("Failed to update application status");
       }
