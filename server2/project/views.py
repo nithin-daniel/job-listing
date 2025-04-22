@@ -744,7 +744,7 @@ class AllUsersView(APIView):
     def get(self, request):
         try:
             # Get all users
-            users = User.objects.all()
+            users = User.objects.filter(is_admin=False)
 
             # Serialize the users
             serializer = UserSerializer(users, many=True)
