@@ -321,6 +321,12 @@ const JobListing = () => {
                       Experience
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Qualification
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total Works
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Applied Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -346,6 +352,35 @@ const JobListing = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {applicant.experience} years
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {applicant.applicant_qualification && (
+                          <div className="flex flex-col items-center space-y-2">
+                            <a
+                              href={applicant.applicant_qualification}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block"
+                            >
+                              <img
+                                src={applicant.applicant_qualification}
+                                alt="Qualification"
+                                className="w-16 h-16 object-cover rounded hover:opacity-80 transition-opacity"
+                              />
+                            </a>
+                            <a
+                              href={applicant.applicant_qualification}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 text-xs underline"
+                            >
+                              View Qualification
+                            </a>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {applicant.applicant_works || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(applicant.applied_date).toLocaleDateString()}

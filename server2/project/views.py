@@ -540,10 +540,18 @@ class JobRequestListView(APIView):
 
                 # If not assigned, return all applicants
                 for applicant in job_request.job_seekers.all():
+                    qualification_url = None
+                    if applicant.qualification_certificate:
+                        qualification_url = request.build_absolute_uri(
+                            applicant.qualification_certificate.url
+                        )
+
                     requests_data.append(
                         {
                             "application_id": str(applicant.id),
                             "applicant_name": applicant.full_name,
+                            "applicant_qualification": qualification_url,
+                            "applicant_works": applicant.works,
                             "experience": applicant.experience or "Not specified",
                             "applied_date": job_request.created_at.strftime("%Y-%m-%d"),
                             "status": job_request.status,
