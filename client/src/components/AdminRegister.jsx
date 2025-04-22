@@ -41,7 +41,7 @@ const AdminRegister = () => {
 
       if (response.status === 201) {
         // Redirect to login page after successful registration
-        navigate("/login");
+        navigate("/");
       }
     } catch (error) {
       console.error("Registration error:", error);

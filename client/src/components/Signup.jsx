@@ -127,7 +127,7 @@ const Signup = () => {
 
       if (response.status === 201) {
         console.log("Signup successful");
-        navigate("/login");
+        navigate("/");
       }
     } catch (error) {
       console.error("Signup error:", error);
@@ -497,7 +497,7 @@ const Signup = () => {
             <p className="text-sm text-center text-gray-600">
               Already have an account?{" "}
               <Link
-                to="/login"
+                to="/"
                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
               >
                 Sign in

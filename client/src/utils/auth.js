@@ -15,5 +15,5 @@ export const handleLogout = (navigate) => {
   localStorage.clear();
 
   // Redirect to login page
-  navigate("/login");
+  navigate("/");
 };
