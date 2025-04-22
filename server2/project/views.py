@@ -656,9 +656,7 @@ class JobCompleteView(APIView):
             job = Job.objects.get(id=job_id)
             job.is_completed = True
             job.save()
-            user = User.objects.get(id=user_id)
-            user.works += 1
-            user.save()
+
             # Update the job acceptance status if it exists
             try:
                 job_acceptance = JobAcceptance.objects.get(job=job)
