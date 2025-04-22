@@ -386,6 +386,9 @@ const Admin = () => {
                         Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Qualification
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -426,6 +429,21 @@ const Admin = () => {
                             >
                               {user.user_type}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {user.user_type === "worker" &&
+                            user.qualification_certificate ? (
+                              <a
+                                href={`http://localhost:8000${user.qualification_certificate}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                View Certificate
+                              </a>
+                            ) : (
+                              <span className="text-gray-500">N/A</span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div className="flex space-x-2">

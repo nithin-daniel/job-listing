@@ -15,20 +15,20 @@ class UserSerializer(serializers.ModelSerializer):
             "city",
             "state",
             "pincode",
-            "highest_qualification",
             "experience",
             "service_category",
             "hourly_rate",
             "works",
+            "qualification_certificate",
         ]
 
     def validate(self, data):
         if data.get("user_type") == "worker":
             required_fields = [
-                "highest_qualification",
                 "experience",
                 "service_category",
                 "hourly_rate",
+                "qualification_certificate",
             ]
             for field in required_fields:
                 if not data.get(field):

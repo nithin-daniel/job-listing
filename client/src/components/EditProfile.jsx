@@ -11,33 +11,37 @@ const EditProfile = ({ profile = {}, onSave, onCancel }) => {
     phone: profile?.mobile_number || "",
     location: profile?.pincode || "",
     experience: profile?.experience || "",
-    skills: profile?.highest_qualification || "",
+    skills: profile?.skills || "",
     bio: profile?.bio || "",
   });
+  const [qualificationImage, setQualificationImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(
+    profile?.qualification_image || null
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const updatedProfile = {
-        ...formData,
-        full_name: formData.name,
-        mobile_number: formData.phone,
-        pincode: formData.location,
-        highest_qualification: formData.skills,
-      };
+      const formDataToSend = new FormData();
+      formDataToSend.append("full_name", formData.name);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("mobile_number", formData.phone);
+      formDataToSend.append("pincode", formData.location);
+      formDataToSend.append("experience", formData.experience);
+      formDataToSend.append("skills", formData.skills);
+      if (qualificationImage) {
+        formDataToSend.append("qualification_image", qualificationImage);
+      }
 
       const response = await axios.put(
         `http://localhost:8000/api/user/profile/?userId=${localStorage.getItem(
           "userId"
         )}`,
-        updatedProfile,
+        formDataToSend,
         {
           headers: {
-            // "Content-Type": "application/json",
             "Content-Type": "multipart/form-data",
-
-            // Add authorization header if required
-            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -47,7 +51,6 @@ const EditProfile = ({ profile = {}, onSave, onCancel }) => {
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      // Add error handling here (e.g., show error message to user)
     }
   };
 
@@ -57,6 +60,18 @@ const EditProfile = ({ profile = {}, onSave, onCancel }) => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setQualificationImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -128,31 +143,6 @@ const EditProfile = ({ profile = {}, onSave, onCancel }) => {
                   className="w-full"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Skills (comma separated)
-                </label>
-                <Input
-                  type="text"
-                  name="skills"
-                  value={formData.skills}
-                  onChange={handleChange}
-                  className="w-full"
-                  placeholder="e.g., Plumbing, Electrical, Carpentry"
-                />
-              </div>
-              {/* <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio
-                </label>
-                <textarea
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  className="w-full h-32 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Tell us about yourself..."
-                />
-              </div> */}
             </div>
 
             <div className="flex justify-end space-x-4">

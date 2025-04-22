@@ -44,9 +44,6 @@ class User(models.Model):
     is_verified = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
-    highest_qualification = models.CharField(
-        max_length=100, choices=QUALIFICATION_CHOICES, blank=True, null=True
-    )
     experience = models.IntegerField(blank=True, null=True)
     service_category = models.ForeignKey(
         ServiceCategory,
@@ -59,6 +56,9 @@ class User(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True
     )
     works = models.IntegerField(default=0)
+    qualification_certificate = models.FileField(
+        upload_to="qualification_certificates/", blank=True, null=True
+    )
 
     def __str__(self):
         return f"{self.full_name}  ({self.id})"

@@ -12,16 +12,6 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-// First, add the qualification choices at the top of your component
-const QUALIFICATION_CHOICES = [
-  { value: "high_school", label: "High School" },
-  { value: "diploma", label: "Diploma" },
-  { value: "bachelors", label: "Bachelor's Degree" },
-  { value: "masters", label: "Master's Degree" },
-  { value: "phd", label: "PhD" },
-  { value: "other", label: "Other" },
-];
-
 const Signup = () => {
   const navigate = useNavigate();
   const [isWorker, setIsWorker] = useState(false);
@@ -38,10 +28,10 @@ const Signup = () => {
     state: "",
     pincode: "",
     // Worker specific fields
-    highest_qualification: "high_school",
     experience: "",
     service_category: "",
     hourly_rate: "",
+    qualification_certificate: null,
   });
 
   useEffect(() => {
@@ -77,10 +67,10 @@ const Signup = () => {
     }
     if (isWorker) {
       if (
-        !formData.highest_qualification ||
         !formData.experience ||
         !formData.service_category ||
-        !formData.hourly_rate
+        !formData.hourly_rate ||
+        !formData.qualification_certificate
       ) {
         setError("Please fill in all worker-specific fields");
         return false;
@@ -95,32 +85,37 @@ const Signup = () => {
 
     if (!validateForm()) return;
 
-    const signupData = {
-      full_name: formData.full_name,
-      email: formData.email,
-      password: formData.password,
-      mobile_number: formData.mobile_number,
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      pincode: formData.pincode,
-      user_type: isWorker ? "worker" : "client",
-      ...(isWorker && {
-        highest_qualification: formData.highest_qualification,
-        experience: parseInt(formData.experience),
-        service_category: formData.service_category,
-        hourly_rate: parseFloat(formData.hourly_rate),
-      }),
-    };
+    const formDataToSend = new FormData();
+    formDataToSend.append("full_name", formData.full_name);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("password", formData.password);
+    formDataToSend.append("mobile_number", formData.mobile_number);
+    formDataToSend.append("address", formData.address);
+    formDataToSend.append("city", formData.city);
+    formDataToSend.append("state", formData.state);
+    formDataToSend.append("pincode", formData.pincode);
+    formDataToSend.append("user_type", isWorker ? "worker" : "client");
+
+    if (isWorker) {
+      formDataToSend.append("experience", formData.experience);
+      formDataToSend.append("service_category", formData.service_category);
+      formDataToSend.append("hourly_rate", formData.hourly_rate);
+      if (formData.qualification_certificate) {
+        formDataToSend.append(
+          "qualification_certificate",
+          formData.qualification_certificate
+        );
+      }
+    }
 
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/api/signup/",
-        signupData,
+        formDataToSend,
         {
-          // headers: {
-          //   "Content-Type": "application/json",
-          // },
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
           withCredentials: true,
         }
       );
@@ -327,7 +322,7 @@ const Signup = () => {
                     </label>
                     <Input
                       id="pincode"
-                      type="text"
+                      type="number"
                       placeholder="Pincode"
                       value={formData.pincode}
                       onChange={(e) =>
@@ -385,76 +380,46 @@ const Signup = () => {
                   <>
                     <div className="space-y-2">
                       <label
-                        htmlFor="highest_qualification"
+                        htmlFor="experience"
                         className="text-sm font-medium block text-left"
                       >
-                        Highest Qualification
+                        Experience (Years)
                       </label>
-                      <select
-                        id="highest_qualification"
-                        value={formData.highest_qualification}
+                      <Input
+                        id="experience"
+                        type="number"
+                        placeholder="Enter your experience"
+                        value={formData.experience}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            highest_qualification: e.target.value,
+                            experience: e.target.value,
                           })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                      >
-                        {QUALIFICATION_CHOICES.map((qualification) => (
-                          <option
-                            key={qualification.value}
-                            value={qualification.value}
-                          >
-                            {qualification.label}
-                          </option>
-                        ))}
-                      </select>
+                        className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label
-                          htmlFor="experience"
-                          className="text-sm font-medium block text-left"
-                        >
-                          Experience (Years)
-                        </label>
-                        <Input
-                          id="experience"
-                          type="number"
-                          placeholder="Enter your experience"
-                          value={formData.experience}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              experience: e.target.value,
-                            })
-                          }
-                          className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label
-                          htmlFor="hourly_rate"
-                          className="text-sm font-medium block text-left"
-                        >
-                          Hourly Rate
-                        </label>
-                        <Input
-                          id="hourly_rate"
-                          type="number"
-                          placeholder="Enter hourly rate"
-                          value={formData.hourly_rate}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              hourly_rate: e.target.value,
-                            })
-                          }
-                          className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="hourly_rate"
+                        className="text-sm font-medium block text-left"
+                      >
+                        Hourly Rate
+                      </label>
+                      <Input
+                        id="hourly_rate"
+                        type="number"
+                        placeholder="Enter hourly rate"
+                        value={formData.hourly_rate}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hourly_rate: e.target.value,
+                          })
+                        }
+                        className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -481,6 +446,33 @@ const Signup = () => {
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="qualification_certificate"
+                        className="text-sm font-medium block text-left"
+                      >
+                        Upload Qualification Certificate
+                      </label>
+                      <Input
+                        id="qualification_certificate"
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            qualification_certificate: e.target.files[0],
+                          })
+                        }
+                        className="focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      />
+                      {formData.qualification_certificate && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          Selected file:{" "}
+                          {formData.qualification_certificate.name}
+                        </p>
+                      )}
                     </div>
                   </>
                 )}

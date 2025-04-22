@@ -312,10 +312,10 @@ const JobSeeker = () => {
                   <span className="font-medium">Hourly Rate:</span> $
                   {userProfile.hourly_rate}
                 </p>
-                <p className="text-gray-600">
+                {/* <p className="text-gray-600">
                   <span className="font-medium">Qualification:</span>{" "}
                   {userProfile.highest_qualification}
-                </p>
+                </p> */}
                 <p className="text-gray-600">
                   <span className="font-medium">Completed Works:</span>{" "}
                   {userProfile.works}
