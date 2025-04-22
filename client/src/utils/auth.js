@@ -1,13 +1,19 @@
-import { useNavigate } from "react-router-dom";
-
 export const isAuthenticated = () => {
   const userId = localStorage.getItem("userId");
   return !!userId;
 };
 
 export const getUserRole = () => {
+  const isAdmin = localStorage.getItem("isAdmin");
   const isWorker = localStorage.getItem("isWorker");
-  return isWorker === "true" ? "worker" : "client";
+
+  if (isAdmin === "true") {
+    return "admin";
+  } else if (isWorker === "true") {
+    return "worker";
+  } else {
+    return "client";
+  }
 };
 
 export const handleLogout = (navigate) => {
