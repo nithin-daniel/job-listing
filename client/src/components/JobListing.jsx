@@ -415,15 +415,20 @@ const JobListing = () => {
                             </Button>
                           )}
                           {applicant.status === "accepted" && (
-                            <Button
-                              variant="outline"
-                              className="bg-blue-500 hover:bg-blue-600 text-white"
-                              onClick={() =>
-                                handleMarkAsDone(applicant.application_id)
-                              }
-                            >
-                              Done
-                            </Button>
+                            <div className="flex flex-col space-y-2">
+                              <div className="text-sm text-gray-500">
+                                {/* Total Works: {applicant.applicant_works || 0} */}
+                              </div>
+                              <Button
+                                variant="outline"
+                                className="bg-blue-500 hover:bg-blue-600 text-white"
+                                onClick={() =>
+                                  handleMarkAsDone(applicant.application_id)
+                                }
+                              >
+                                Done
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </td>

@@ -532,12 +532,21 @@ class JobRequestListView(APIView):
             for job_request in job_requests:
                 # Check if job is already assigned
                 if job_request.assigned_to:
+                    qualification_url = None
+                    if job_request.assigned_to.qualification_certificate:
+                        qualification_url = request.build_absolute_uri(
+                            job_request.assigned_to.qualification_certificate.url
+                        )
                     return Response(
                         {
                             "message": "Job already assigned",
                             "data": {
-                                "application_id": str(job_request.assigned_to.id),
+                                "application_id": str(
+                                    job_request.assigned_to.id
+                                ),  # Changed to user ID
                                 "applicant_name": job_request.assigned_to.full_name,
+                                "applicant_qualification": qualification_url,
+                                "applicant_works": job_request.assigned_to.works or 0,
                                 "experience": job_request.assigned_to.experience
                                 or "Not specified",
                                 "applied_date": job_request.created_at.strftime(
@@ -559,10 +568,10 @@ class JobRequestListView(APIView):
 
                     requests_data.append(
                         {
-                            "application_id": str(applicant.id),
+                            "application_id": str(applicant.id),  # Changed to user ID
                             "applicant_name": applicant.full_name,
                             "applicant_qualification": qualification_url,
-                            "applicant_works": applicant.works,
+                            "applicant_works": applicant.works or 0,
                             "experience": applicant.experience or "Not specified",
                             "applied_date": job_request.created_at.strftime("%Y-%m-%d"),
                             "status": job_request.status,
