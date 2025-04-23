@@ -721,14 +721,52 @@ class JobCompleteView(APIView):
 class CompletedJobsView(APIView):
     def get(self, request):
         try:
-            # Get all completed jobs
-            jobs = Job.objects.filter(is_completed=True).order_by("-created_at")
-            serializer = JobSerializer(jobs, many=True)
+            jobs = (
+                Job.objects.filter(is_completed=True)
+                .select_related("user", "service_category")
+                .prefetch_related(
+                    "acceptances"
+                )  # Use the related_name from JobAcceptance model
+                .order_by("-created_at")
+            )
+
+            completed_jobs_data = []
+            for job in jobs:
+                # Get the job acceptance record for this job
+                job_acceptance = job.acceptances.first()
+                assigned_worker = job_acceptance.assigned_to if job_acceptance else None
+
+                job_data = {
+                    "id": str(job.id),
+                    "title": job.title,
+                    "description": job.description,
+                    "budget": str(job.budget),
+                    "location": job.location,
+                    "created_at": job.created_at,
+                    "service_category": (
+                        job.service_category.name if job.service_category else None
+                    ),
+                    "creator": {
+                        "id": str(job.user.id),
+                        "name": job.user.full_name,
+                        "email": job.user.email,
+                    },
+                    "assigned_to": (
+                        {
+                            "id": str(assigned_worker.id),
+                            "name": assigned_worker.full_name,
+                            "email": assigned_worker.email,
+                        }
+                        if assigned_worker
+                        else None
+                    ),
+                }
+                completed_jobs_data.append(job_data)
 
             return Response(
                 {
                     "message": "Completed jobs fetched successfully",
-                    "data": serializer.data,
+                    "data": completed_jobs_data,
                     "status": "success",
                 }
             )

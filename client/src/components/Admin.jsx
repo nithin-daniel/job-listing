@@ -508,13 +508,13 @@ const Admin = () => {
                         Title
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        Job ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Budget
+                        Job Creator
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Location
+                        Assigned To
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Completed Date
@@ -543,18 +543,28 @@ const Admin = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {job.description}
+                            <div className="text-sm font-medium text-gray-500">
+                              {job.id}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              ${job.budget}
+                            <div className="flex flex-col">
+                              <div className="text-sm font-medium text-gray-900">
+                                {job.creator?.name || "Unknown"}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {job.creator?.email || ""}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {job.location}
+                            <div className="flex flex-col">
+                              <div className="text-sm font-medium text-gray-900">
+                                {job.assigned_to?.name || "Not Assigned"}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {job.assigned_to?.email || ""}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
