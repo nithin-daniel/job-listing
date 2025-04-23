@@ -836,12 +836,27 @@ class ComplaintCreateView(APIView):
 class ComplaintsListView(APIView):
     def get(self, request):
         try:
-            complaints = Complaint.objects.all().order_by("-created_at")
-            serializer = ComplaintSerializer(complaints, many=True)
+            complaints = (
+                Complaint.objects.all().select_related("user").order_by("-created_at")
+            )
+            complaints_data = [
+                {
+                    "id": str(complaint.id),
+                    "title": complaint.title,
+                    "details": complaint.details,
+                    "created_at": complaint.created_at,
+                    "user_full_name": (
+                        complaint.user.full_name if complaint.user else None
+                    ),
+                    "status": "success",
+                }
+                for complaint in complaints
+            ]
+
             return Response(
                 {
                     "message": "Complaints fetched successfully",
-                    "data": serializer.data,
+                    "data": complaints_data,
                     "status": "success",
                 }
             )
