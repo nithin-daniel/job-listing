@@ -76,24 +76,35 @@ class UserLoginView(APIView):
 class NonVerifiedUsersView(APIView):
     def get(self, request):
         try:
-            # Get all non-verified users
-            non_verified_users = User.objects.filter(is_verified=False)
-
-            # Serialize the users
-            serializer = UserSerializer(non_verified_users, many=True)
-
-            return Response(
-                {
-                    "message": "Non-verified users fetched successfully",
-                    "data": serializer.data,
-                    "status": "success",
-                },
-                status=status.HTTP_200_OK,
+            # Get non-verified users
+            non_verified_users = User.objects.filter(is_verified=False).select_related(
+                "service_category"
             )
+
+            # Serialize with service category name
+            users_data = [
+                {
+                    "id": str(user.id),
+                    "full_name": user.full_name,
+                    "email": user.email,
+                    "user_type": user.user_type,
+                    "service_category": (
+                        user.service_category.name if user.service_category else None
+                    ),
+                    "qualification_certificate": (
+                        user.qualification_certificate.url
+                        if user.qualification_certificate
+                        else None
+                    ),
+                    # ... other fields ...
+                }
+                for user in non_verified_users
+            ]
+
+            return Response(users_data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {"message": str(e), "status": "error"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 

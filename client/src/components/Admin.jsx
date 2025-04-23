@@ -25,10 +25,14 @@ const Admin = () => {
       const response = await axios.get(
         "http://127.0.0.1:8000/api/non-verified-users/"
       );
-      setNonVerifiedUsers(response.data.data);
+      // Check the actual structure of your response data
+      const users = response.data || []; // Remove .data if your API directly returns the array
+      console.log("API Response:", users); // Debug log to check response structure
+      setNonVerifiedUsers(users);
     } catch (err) {
       console.error("Error fetching non-verified users:", err);
       setError("Failed to fetch non-verified users");
+      setNonVerifiedUsers([]);
     } finally {
       setLoading(false);
     }
@@ -386,6 +390,9 @@ const Admin = () => {
                         Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Service Category
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Qualification
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -396,68 +403,82 @@ const Admin = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {loading ? (
                       <tr>
-                        <td colSpan="4" className="px-6 py-4 text-center">
+                        <td colSpan="6" className="px-6 py-4 text-center">
                           Loading...
                         </td>
                       </tr>
-                    ) : nonVerifiedUsers.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="px-6 py-4 text-center">
-                          No non-verified users found
-                        </td>
-                      </tr>
                     ) : (
-                      nonVerifiedUsers.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.full_name}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-500">
-                              {user.email}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                user.user_type === "worker"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-purple-100 text-purple-800"
-                              }`}
-                            >
-                              {user.user_type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {user.user_type === "worker" &&
-                            user.qualification_certificate ? (
-                              <a
-                                href={`http://localhost:8000${user.qualification_certificate}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 underline"
-                              >
-                                View Certificate
-                              </a>
-                            ) : (
-                              <span className="text-gray-500">N/A</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="outline"
-                                className="bg-green-500 hover:bg-green-600 text-white"
-                                onClick={() => handleAcceptUser(user.id)}
-                              >
-                                Accept
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                      <>
+                        {console.log(
+                          "NonVerifiedUsers State:",
+                          nonVerifiedUsers
+                        )}{" "}
+                        {/* Debug log */}
+                        {(nonVerifiedUsers || []).length === 0 ? (
+                          <tr>
+                            <td colSpan="6" className="px-6 py-4 text-center">
+                              No non-verified users found
+                            </td>
+                          </tr>
+                        ) : (
+                          nonVerifiedUsers.map((user) => (
+                            <tr key={user.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {user.full_name}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-500">
+                                  {user.email}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    user.user_type === "worker"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-purple-100 text-purple-800"
+                                  }`}
+                                >
+                                  {user.user_type}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                  {user.service_category || "N/A"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {user.user_type === "worker" &&
+                                user.qualification_certificate ? (
+                                  <a
+                                    href={`http://localhost:8000${user.qualification_certificate}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 underline"
+                                  >
+                                    View Certificate
+                                  </a>
+                                ) : (
+                                  <span className="text-gray-500">N/A</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    className="bg-green-500 hover:bg-green-600 text-white"
+                                    onClick={() => handleAcceptUser(user.id)}
+                                  >
+                                    Accept
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </>
                     )}
                   </tbody>
                 </table>
